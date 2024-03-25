@@ -78,6 +78,8 @@ source /usr/local/gromacs/bin/GMXRC
 
 [測試檔案及教學來源](http://www.mdtutorials.com/gmx/lysozyme/index.html)，對指令內容有相關問題請參考連結內說明。
 
+:::spoiler {state="open"} **水中溶菌酶模擬**
+
 1. 下載蛋白質pdb檔並去除水分子
 
 ```bash!
@@ -108,13 +110,52 @@ gmx editconf -f 1AKI_processed.gro -o 1AKI_newbox.gro -c -d 1.0 -bt cubic
 gmx solvate -cp 1AKI_newbox.gro -cs spc216.gro -o 1AKI_solv.gro -p topol.top
 ```
 
-6. 下載後續處理需要的檔案
+6. 下載後續處理需要的動力學參數檔
 
 ```bash!
 wget http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp
 ```
 
+7. 將動力學參數檔與拓譜資訊結合產生出運行輸入文件(替換水分子以達系統電中性)
 
+```bash!
+gmx grompp -f ions.mdp -c 1AKI_solv.gro -p topol.top -o ions.tpr
+```
+
+8. 將文件傳遞給genion
+
+```bash!
+gmx genion -s ions.tpr -o 1AKI_solv_ions.gro -p topol.top -pname NA -nname CL -neutral
+```
+
+9. 將檔案組合轉換成二進制檔
+
+```bash!
+gmx grompp -f minim.mdp -c 1AKI_solv_ions.gro -p topol.top -o em.tpr
+```
+
+10. 執行能量最小化(結構優化)
+
+```bash!
+gmx mdrun -v -deffnm em
+```
+
+11. 分析執行最小化後的能量曲線，確認是否收斂
+
+```bash!
+gmx energy -f em.edr -o potential.xvg
+```
+
+12. 下載參數檔並執行動力學平衡計算
+
+```bash!
+wget http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp
+```
+
+:::
+
+
+:::spoiler {state="open"} **JOB腳本與執行範例**
 
 ```bash!
 #!/bin/bash
@@ -136,3 +177,6 @@ mpirun /The/pathway/you/install/GROMACS ...
 ```bash!
 sbatch test.sh
 ```
+
+:::
+
