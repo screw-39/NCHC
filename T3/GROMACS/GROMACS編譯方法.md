@@ -146,11 +146,71 @@ gmx mdrun -v -deffnm em
 gmx energy -f em.edr -o potential.xvg
 ```
 
-12. 下載參數檔並執行動力學平衡計算
+12. 下載參數檔並執行等溫等容的平衡計算
 
 ```bash!
 wget http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp
+
+gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -o nvt.tpr
+gmx mdrun -deffnm nvt
 ```
+
+13. 分析計算結果的溫度變化
+
+```bash!
+gmx energy -f nvt.edr -o temperature.xvg
+
+>16 0
+```
+
+14. 下載參數檔並執行等溫等壓的平衡計算
+
+```bash!
+wget http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp
+
+gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p topol.top -o npt.tpr
+gmx mdrun-deffnm npt
+```
+
+15. 分析計算結果的壓力變化
+
+```bash!
+gmx energy -f npt.edr -o pressure.xvg
+
+>18 0
+```
+15. 分析計算結果的密度變化
+
+```bash!
+gmx energy -f npt.edr -o density.xvg
+
+>24 0
+```
+
+16. 下載腳本並放開系統開始進行動力學模擬計算
+
+```bash!
+wget http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp
+
+gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md_0_1.tpr
+gmx mdrun -deffnm md_0_1
+```
+
+17. 使用trjconv工具處理計算後的結果供後續分析使用
+
+```bash!
+gmx trjconv -s md_0_1.tpr -f md_0_1.xtc -o md_0_1_noPBC.xtc -pbc mol -center
+```
+
+18. 分析RMSD
+
+```bash!
+gmx rms -s md_0_1.tpr -f md_0_1_noPBC.xtc -o rmsd.xvg -tu ns
+```
+
+
+
+
 
 :::
 
