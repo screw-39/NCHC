@@ -186,15 +186,16 @@ def job_processor(row, trans_firsttime, unittime):
     result = {'jobstart':jobstart, 'jobend':jobend, 'nodelist':nodelist, 'allocated_cpu':allocated_cpu, 'backfill_allocated_cpu':allocated_cpu_Backfill, 'cpu_useratio':cpu_useratio}
     return result
 
-def usage_heatmap(log, unit=300):
+def usage(log, unit=300):
     '''
     log(dataframe) -> usage_heatmap(dataframe)
     unit(int):         How many unit do you want to split
     '''
 
     #clean the log for processing
-    log = log.query('Start != "None"').query('End != "None"').query('Start != "Unknown"').query('End != "Unknown"').query('NodeList != "None assigned"')
-    
+    log = log.query('Group != ""').query('Start != "None"').query('End != "None"').query('Start != "Unknown"').query('End != "Unknown"').query('NodeList != "None assigned"')
+    log = log.loc[:, ['Start', 'End', 'NodeList', 'AllocCPUS', 'TotalCPU', 'Flags']]
+
     #NODEMAX = 598
     firsttime = log.End.sort_values(ascending=1).iloc[0]
     
@@ -209,27 +210,27 @@ def usage_heatmap(log, unit=300):
 
     
     for index, row in log.iterrows():
-        if row.Group != '': #one job count once
-            result = job_processor(row, trans_firsttime, unittime)
+        
+        result = job_processor(row, trans_firsttime, unittime)
+        # result = [jobstart(int), jobend(int), nodelist(list), allocated_cpu(list), backfill_allocated_cpu(list), cpu_useratio(list)]
+        
+        try:
+            # add_value_to_data(data, timestart, timeend, nodelist, value)
+            cpu_use_rate = add_value_to_data(cpu_use_rate, result['jobstart'], result['jobend'], result['nodelist'], result['cpu_useratio'])
+        except:
+            pass
 
-            # result = [jobstart(int), jobend(int), nodelist(list), allocated_cpu(list), backfill_allocated_cpu(list), cpu_useratio(list)]
-            try:
-                # add_value_to_data(data, timestart, timeend, nodelist, value)
-                cpu_use_rate = add_value_to_data(cpu_use_rate, result['jobstart'], result['jobend'], result['nodelist'], result['cpu_useratio'])
-            except:
-                pass
+        try:
+            # add_value_to_data(data, timestart, timeend, nodelist, value)
+            cpu_occupy = add_value_to_data(cpu_occupy, result['jobstart'], result['jobend'], result['nodelist'], result['allocated_cpu'])
+        except:
+            pass
 
-            try:
-                # add_value_to_data(data, timestart, timeend, nodelist, value)
-                cpu_occupy = add_value_to_data(cpu_occupy, result['jobstart'], result['jobend'], result['nodelist'], result['allocated_cpu'])
-            except:
-                pass
-
-            try:
-                # add_value_to_data(data, timestart, timeend, nodelist, value)
-                cpu_occupy_backfill = add_value_to_data(cpu_occupy_backfill, result['jobstart'], result['jobend'], result['nodelist'], result['backfill_allocated_cpu'])
-            except:
-                pass
+        try:
+            # add_value_to_data(data, timestart, timeend, nodelist, value)
+            cpu_occupy_backfill = add_value_to_data(cpu_occupy_backfill, result['jobstart'], result['jobend'], result['nodelist'], result['backfill_allocated_cpu'])
+        except:
+            pass
 
     #transform the x-axis of dfs ( unit -> yyyy-mm-ddThh:mm:ss )
     #trans_x_time(cpu_use_rate.index * unittime + trans_firsttime)
@@ -240,4 +241,41 @@ def usage_heatmap(log, unit=300):
     return {'cpu_use_rate':cpu_use_rate, 'cpu_occupy':cpu_occupy, 'cpu_occupy_backfill':cpu_occupy_backfill}
 
 
+def wait_time(log):
+    '''
+    
+    '''
+    log = log.query('Group != ""').query('Start != "None"').query('Submit != "None"').query('Start != "Unknown"').query('Submit != "Unknown"').query('NodeList != "None assigned"')
+    log = log.loc[:, ['NCPUS', 'Submit', 'Start']]
+    log.Start = log.Start.apply(time_translator)
+    log.Submit = log.Submit.Submit(time_translator)
+    log['wait_time'] = log['Start'] - log['Submit']
+    log = log.loc[:, ['NCPUS', 'wait_time']].sort_values(by=['#CPU'])
 
+    return log
+
+def work_time(log):
+    '''
+    
+    '''
+    log = log.query('Group != ""').query('Start != "None"').query('End != "None"').query('Start != "Unknown"').query('End != "Unknown"').query('NodeList != "None assigned"')
+    log = log.loc[:, ['NCPUS', 'Start', 'End']]
+    log.Start = log.Start.apply(time_translator)
+    log.End = log.End.apply(time_translator)
+    log['work_time'] = log['End'] - log['Start']
+    log = log.loc[:, ['NCPUS', 'work_time']].sort_values(by=['#CPU'])
+
+    return log
+
+def cancel_time(log):
+    '''
+    
+    '''
+    log = log.query('Group != ""').query('Start == "None"').query('Submit != "None"').query('End != "None"').query('Submit != "Unknown"').query('End != "Unknown"')
+    log = log.loc[:, ['NCPUS', 'Submit', 'End']]
+    log.Submit = log.Submit.apply(time_translator)
+    log.End = log.End.apply(time_translator)
+    log['cancel_time'] = log['End'] - log['Submit']
+    log = log.loc[:, ['NCPUS', 'cancel_time']].sort_values(by=['#CPU'])
+
+    return log
