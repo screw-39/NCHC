@@ -14,7 +14,7 @@ ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
 '''
 
 
-def plot_heatmap(df, title, df2=None):
+def plot_usage_heatmap(df, title, df2=None):
     # Draw heatmap
     fig = go.Figure(data=go.Heatmap(
         z=df.values,
@@ -83,7 +83,7 @@ def plot_heatmap(df, title, df2=None):
     fig.show()
     pio.write_image(fig, f'{title}.png', width=24*200, height=16*200, scale=2)
 
-def plot_scatter(data, y_title, title):
+def plot_time_scatter(data, y_title, title):
     # data[#CPU, time]
     fig = go.Figure(go.Scatter(
         x=data.iloc[:, 0],
@@ -160,6 +160,7 @@ def plot_scatter(data, y_title, title):
     fig.show()
     #pio.write_image(fig, f'{title}.png', scale=2)
 
+def plot_submit_heatmap(log):
     fig = go.Figure(data=go.Heatmap(
         z=test.values,
         x=test.columns,
@@ -173,184 +174,218 @@ def plot_scatter(data, y_title, title):
         yaxis = 'y'
     ))
 
-fig.add_trace(go.Bar(
-        x = df2['y'],
-        y = df2.Submit_time,
-        xaxis = 'x2',
-        yaxis = 'y',
-        marker = {
-            'line':{
-              'color':'rgb(0, 0, 0)',
-              'width':1.5
-          }
-        },
-        orientation='h'
-    ))
-
-fig.add_trace(go.Bar(
-        x = df.Partition,
-        y = df.y,
-        xaxis = 'x',
-        yaxis = 'y2',
-        marker = {
-            'color':'rgb(0, 0, 125)'
+    fig.add_trace(go.Bar(
+            x = df2['y'],
+            y = df2.Submit_time,
+            xaxis = 'x2',
+            yaxis = 'y',
+            marker = {
+                'line':{
+                'color':'rgb(0, 0, 0)',
+                'width':1.5
             }
-    ))
+            },
+            orientation='h'
+        ))
 
-week_ticks = [0, 86400, 172800, 259200, 345600, 432000, 518400]
-week_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    fig.add_trace(go.Bar(
+            x = df.Partition,
+            y = df.y,
+            xaxis = 'x',
+            yaxis = 'y2',
+            marker = {
+                'color':'rgb(0, 0, 125)'
+                }
+        ))
 
-fig.update_layout(
-    #title={'text':'test', 'font':{'size': 70}},
-    #xaxis_nticks=36,
-    plot_bgcolor='White',  # 將背景設置為白色
-    width=1200,  # 圖的寬度
-    height=1800,
-    #yaxis={'tickfont':{'size':60}},  # 調整y軸標籤字體大小
-    #xaxis={'tickfont':{'size':60}},
-    #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
-    showlegend=False,
-    xaxis = dict(
-        zeroline = False,
-        domain = [0,0.83],
-        showgrid = False
-    ),
-    yaxis = dict(
-        zeroline = False,
-        domain = [0,0.83],
-        showgrid = False
-    ),
-    xaxis2 = dict(
-        zeroline = False,
-        domain = [0.85,1],
-        showgrid = False
-    ),
-    yaxis2 = dict(
-        type = "log",
-        zeroline = False,
-        domain = [0.85,1],
-        showgrid = False,
-        # tickvals=week_ticks,  # 自定義 tick 位置
-        # ticktext=week_labels 
-    ),
-    shapes=[
-        # 添加一個矩形作為外框
-        dict(
-            type="rect",
-            x0=0, y0=0, x1=0.83, y1=0.83,
-            xref="paper", yref="paper",
-            line=dict(color="black", width=1)
+    week_ticks = [0, 86400, 172800, 259200, 345600, 432000, 518400]
+    week_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+    fig.update_layout(
+        #title={'text':'test', 'font':{'size': 70}},
+        #xaxis_nticks=36,
+        plot_bgcolor='White',  # 將背景設置為白色
+        width=1200,  # 圖的寬度
+        height=1800,
+        #yaxis={'tickfont':{'size':60}},  # 調整y軸標籤字體大小
+        #xaxis={'tickfont':{'size':60}},
+        #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
+        showlegend=False,
+        xaxis = dict(
+            zeroline = False,
+            domain = [0,0.83],
+            showgrid = False
         ),
+        yaxis = dict(
+            zeroline = False,
+            domain = [0,0.83],
+            showgrid = False
+        ),
+        xaxis2 = dict(
+            zeroline = False,
+            domain = [0.85,1],
+            showgrid = False
+        ),
+        yaxis2 = dict(
+            type = "log",
+            zeroline = False,
+            domain = [0.85,1],
+            showgrid = False,
+            # tickvals=week_ticks,  # 自定義 tick 位置
+            # ticktext=week_labels 
+        ),
+        shapes=[
+            # 添加一個矩形作為外框
+            dict(
+                type="rect",
+                x0=0, y0=0, x1=0.83, y1=0.83,
+                xref="paper", yref="paper",
+                line=dict(color="black", width=1)
+            ),
+            
+            dict(
+                type="rect",
+                x0=0, y0=0.85, x1=0.83, y1=1,
+                xref="paper", yref="paper",
+                line=dict(color="black", width=1)
+            ),
+
+            dict(
+                type="rect",
+                x0=0.85, y0=0, x1=1, y1=0.83,
+                xref="paper", yref="paper",
+                line=dict(color="black", width=1)
+            ),
+
+            dict(
+                type="rect",
+                x0=0.85, y0=0, x1=1, y1=0.83,
+                xref="paper", yref="paper",
+                line=dict(color="black", width=1)
+            ),
+        ]
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=0,  # 開始位置
+        y0=24*60*60,
+        x1=35,  # 結束位置
+        y1=24*60*60,
+        line=dict(
+            color="RoyalBlue",
+            width=2,
+            dash="dashdot",  # 虛線樣式
+        ),
+        xref="x2",  # 對應主 x 軸
+        yref="y1",  # 對應主 y 軸
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=0,  # 開始位置
+        y0=2*24*60*60,
+        x1=35,  # 結束位置
+        y1=2*24*60*60,
+        line=dict(
+            color="RoyalBlue",
+            width=2,
+            dash="dashdot",  # 虛線樣式
+        ),
+        xref="x2",  # 對應主 x 軸
+        yref="y1",  # 對應主 y 軸
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=0,  # 開始位置
+        y0=3*24*60*60,
+        x1=35,  # 結束位置
+        y1=3*24*60*60,
+        line=dict(
+            color="RoyalBlue",
+            width=2,
+            dash="dashdot",  # 虛線樣式
+        ),
+        xref="x2",  # 對應主 x 軸
+        yref="y1",  # 對應主 y 軸
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=0,  # 開始位置
+        y0=4*24*60*60,
+        x1=35,  # 結束位置
+        y1=4*24*60*60,
+        line=dict(
+            color="RoyalBlue",
+            width=2,
+            dash="dashdot",  # 虛線樣式
+        ),
+        xref="x2",  # 對應主 x 軸
+        yref="y1",  # 對應主 y 軸
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=0,  # 開始位置
+        y0=5*24*60*60,
+        x1=35,  # 結束位置
+        y1=5*24*60*60,
+        line=dict(
+            color="RoyalBlue",
+            width=2,
+            dash="dashdot",  # 虛線樣式
+        ),
+        xref="x2",  # 對應主 x 軸
+        yref="y1",  # 對應主 y 軸
+    )
+
+    fig.add_shape(
+        type="line",
+        x0=0,  # 開始位置
+        y0=6*24*60*60,
+        x1=35,  # 結束位置
+        y1=6*24*60*60,
+        line=dict(
+            color="RoyalBlue",
+            width=2,
+            dash="dashdot",  # 虛線樣式
+        ),
+        xref="x2",  # 對應主 x 軸
+        yref="y1",  # 對應主 y 軸
+    )
+
+def plot_cumulative():
+    fig = go.Figure()
+    fig_area = px.area(x=df.iloc[:,0], y=df.iloc[:,2])
+    for trace in fig_area.data:
+        fig.add_trace(trace)
+    fig.add_trace(go.Bar(x=df.iloc[:,0], y=df.iloc[:,2]))
+    #fig.add_trace(go.Area(x=df.iloc[:,0], y=df.iloc[:,2]))
+    #fig = px.area(df, x='#CPU', y='cumulative')
+    #fig = px.bar(df, x='#CPU', y='cumulative')
+
+    fig.update_layout(
+        title={'text':'#CPU v.s. cumulative count', 'font':{'size':30}},
+        xaxis_title={'text':"#CPU", 'font':{'size':30}},
+        yaxis_title={'text':'cumulative count', 'font':{'size':30}},
+        showlegend=False,
+        width=1500,
+        yaxis=dict(tickfont=dict(size=20)),  # 調整y軸標籤字體大小
+        xaxis=dict(tickfont=dict(size=20))
+        )
+    fig.update_traces(marker_color='rgb(0, 0, 0)', marker_line_color='rgb(0, 0, 0)',
+                        marker_line_width=1.5, opacity=0.6)
+
+    fig.add_shape(
+            type='line', line=dict(dash='dash'),
+            name = '95%',
+            x0 = 0,
+            x1 = df.iloc[-1,0],
+            y0 = i*0.95,
+            y1 = i*0.95
+        )
         
-        dict(
-            type="rect",
-            x0=0, y0=0.85, x1=0.83, y1=1,
-            xref="paper", yref="paper",
-            line=dict(color="black", width=1)
-        ),
-
-        dict(
-            type="rect",
-            x0=0.85, y0=0, x1=1, y1=0.83,
-            xref="paper", yref="paper",
-            line=dict(color="black", width=1)
-        ),
-
-        dict(
-            type="rect",
-            x0=0.85, y0=0, x1=1, y1=0.83,
-            xref="paper", yref="paper",
-            line=dict(color="black", width=1)
-        ),
-    ]
-)
-
-fig.add_shape(
-    type="line",
-    x0=0,  # 開始位置
-    y0=24*60*60,
-    x1=35,  # 結束位置
-    y1=24*60*60,
-    line=dict(
-        color="RoyalBlue",
-        width=2,
-        dash="dashdot",  # 虛線樣式
-    ),
-    xref="x2",  # 對應主 x 軸
-    yref="y1",  # 對應主 y 軸
-)
-
-fig.add_shape(
-    type="line",
-    x0=0,  # 開始位置
-    y0=2*24*60*60,
-    x1=35,  # 結束位置
-    y1=2*24*60*60,
-    line=dict(
-        color="RoyalBlue",
-        width=2,
-        dash="dashdot",  # 虛線樣式
-    ),
-    xref="x2",  # 對應主 x 軸
-    yref="y1",  # 對應主 y 軸
-)
-
-fig.add_shape(
-    type="line",
-    x0=0,  # 開始位置
-    y0=3*24*60*60,
-    x1=35,  # 結束位置
-    y1=3*24*60*60,
-    line=dict(
-        color="RoyalBlue",
-        width=2,
-        dash="dashdot",  # 虛線樣式
-    ),
-    xref="x2",  # 對應主 x 軸
-    yref="y1",  # 對應主 y 軸
-)
-
-fig.add_shape(
-    type="line",
-    x0=0,  # 開始位置
-    y0=4*24*60*60,
-    x1=35,  # 結束位置
-    y1=4*24*60*60,
-    line=dict(
-        color="RoyalBlue",
-        width=2,
-        dash="dashdot",  # 虛線樣式
-    ),
-    xref="x2",  # 對應主 x 軸
-    yref="y1",  # 對應主 y 軸
-)
-
-fig.add_shape(
-    type="line",
-    x0=0,  # 開始位置
-    y0=5*24*60*60,
-    x1=35,  # 結束位置
-    y1=5*24*60*60,
-    line=dict(
-        color="RoyalBlue",
-        width=2,
-        dash="dashdot",  # 虛線樣式
-    ),
-    xref="x2",  # 對應主 x 軸
-    yref="y1",  # 對應主 y 軸
-)
-
-fig.add_shape(
-    type="line",
-    x0=0,  # 開始位置
-    y0=6*24*60*60,
-    x1=35,  # 結束位置
-    y1=6*24*60*60,
-    line=dict(
-        color="RoyalBlue",
-        width=2,
-        dash="dashdot",  # 虛線樣式
-    ),
-    xref="x2",  # 對應主 x 軸
-    yref="y1",  # 對應主 y 軸
-)
+    fig.show()
+    pio.write_image(fig, f'CPU_vs_cumulative_count.png', scale=2)
