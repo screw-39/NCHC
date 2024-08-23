@@ -8,8 +8,8 @@ This part will catch the formated dataframe from extract.py and transform the da
 Muiltiple types of data transform form this part will give to next part(visual.py) to visualize the log.
 ---------------------------------------------------------------------------------------------------------
 usage(log, unit=300):   log(dataframe) -> {'cpu_use_rate'(dataframe), 'cpu_occupy'(dataframe), 'cpu_occupy_backfill'(dataframe)}
-wait_time(log):         log[NCPUS, wait_time(second)]
-work_time(log):         log[NCPUS, work_time(second)]
+wait_time(log):         log(dataframe) -> log[NCPUS, wait_time(second)]
+work_time(log):         log(dataframe) -> log[NCPUS, work_time(second)]
 cancel_time(log):       log(dataframe) -> log[NCPUS, cancel_time(second)]
 submit_partition(log):  log(dataframe) -> {map[Partition * submit_time(second in weekday)], x_sub, y_sub}
 ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
