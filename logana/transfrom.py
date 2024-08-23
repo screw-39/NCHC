@@ -3,9 +3,34 @@ import re
 import numpy as np
 import pandas as pd
 
+'''
+This part will catch the formated dataframe from extract.py and transform the data into muiltiple types.
+Muiltiple types of data transform form this part will give to next part(visual.py) to visualize the log.
+---------------------------------------------------------------------------------------------------------
+usage(log, unit=300):   log(dataframe) -> {'cpu_use_rate'(dataframe), 'cpu_occupy'(dataframe), 'cpu_occupy_backfill'(dataframe)}
+wait_time(log):         log[NCPUS, wait_time(second)]
+work_time(log):         log[NCPUS, work_time(second)]
+cancel_time(log):       log(dataframe) -> log[NCPUS, cancel_time(second)]
+submit_partition(log):  log(dataframe) -> {map[Partition * submit_time(second in weekday)], x_sub, y_sub}
+ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
+'''
+
 def time_translator(time):
     # translate time(yyyy-mm-ddThh:mm:ss) into time(sec)
     return int(datetime.strptime(time, "%Y-%m-%dT%H:%M:%S").timestamp())
+
+def weekday_time_translator(time):
+    # translate time(yyyy-mm-ddThh:mm:ss) into weekday time(sec)
+    # 解析時間標籤
+    dt = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S")
+    
+    # 取得星期數，星期一為0，日為6
+    weekday = dt.weekday()
+
+    # 計算星期一到當下的總秒數
+    seconds_since_monday = weekday * 24 * 60 * 60 + dt.hour * 60 * 60 + dt.minute * 60 + dt.second
+
+    return seconds_since_monday
 
 def time_to_seconds(time):
     # translate time(hh:mm:ss) into time(sec)
@@ -82,6 +107,26 @@ def make_data(unit):
     # Renew column name of dataFrame
     data.columns = columns
     return data
+
+def make_submit_map(log):
+    '''
+    creat a blank dataframe for submit_partition map
+    size: [partition * time]
+    '''
+    Partition = ['development', 'ct112', 'ct448', 'ct1k', 'ct2k', 'ct4k', 'ct8k', 'arm-dev', 'arm144', 'arm576', 'arm1440', 'dc-ENT112024-01', 'visual-dev', 'visual', 'vscode', 'jupyter']
+    Submit = []
+    
+    for time in log.Submit:
+        if time not in Submit:
+            Submit.append(time)
+
+    # Creat the zero matrix
+    heatmap = np.zeros((len(Submit), len(Partition)))
+    heatmap = pd.DataFrame(heatmap)
+    heatmap.columns = Partition
+    heatmap.index = Submit
+
+    return heatmap
 
 def add_value_to_data(data, timestart, timeend, nodelist, value):
     """
@@ -277,5 +322,43 @@ def cancel_time(log):
     log.End = log.End.apply(time_translator)
     log['cancel_time'] = log['End'] - log['Submit']
     log = log.loc[:, ['NCPUS', 'cancel_time']].sort_values(by=['#CPU'])
+
+    return log
+
+def submit_partition(log):
+    '''
+    log(dataframe) -> {map[Partition * submit_time(second in weekday)], x_sub, y_sub}
+    '''
+    log = log.query('Group != ""').query('Submit != "None"').query('Submit != "Unknown"')
+    log = log.loc[:, ['Submit', 'Partition']]
+    log.Submit = log.Submit.apply(weekday_time_translator)
+    log = log.sort_values('Submit')
+    map = make_submit_map(log)
+    for ind, row in log.iterrows():
+        try:
+            map.loc[row.Submit, row.Partition] += 1
+        except:
+            continue
+    y_sub = pd.DataFrame.from_dict({'Partition':[i for i in map.columns], 'y':[int(i) for i in map.sum().values]})
+    x_sub = pd.DataFrame.from_dict({'Submit_time':[i for i in map.index], 'y':[r.sum() for i,r in map.iterrows()]})
+
+    return {'map':map, 'x_sub':x_sub, 'y_sub':y_sub}
+
+def ncpu_job_count(log):
+    '''
+    log(dataframe) -> log[#cpu, job_count(cumulative)]
+    '''
+    log = log.query('Group != ""').query('Submit != "None"').query('Submit != "Unknown"')
+    log = log.loc[:, ['NCPUS']]
+    log = log.sort_values('NCPUS')
+    
+    cpu = [int(i) for i in log.groupby('#CPU').describe().index].sort()
+    cumulative = []
+    count = 0
+    for c in cpu:
+        count += log[log.NCPUS == str(c)].count()
+        cumulative.append(count)
+    
+    log = pd.DataFrame({'#CPU':cpu, 'count':cumulative})
 
     return log
