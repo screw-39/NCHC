@@ -188,7 +188,7 @@ def job_processor(row, trans_firsttime, unittime):
 
 def usage(log, unit=300):
     '''
-    log(dataframe) -> usage_heatmap(dataframe)
+    log(dataframe) -> {'cpu_use_rate'(dataframe), 'cpu_occupy'(dataframe), 'cpu_occupy_backfill'(dataframe)}
     unit(int):         How many unit do you want to split
     '''
 
@@ -243,7 +243,7 @@ def usage(log, unit=300):
 
 def wait_time(log):
     '''
-    
+    log(dataframe) -> log[NCPUS, wait_time(second)]
     '''
     log = log.query('Group != ""').query('Start != "None"').query('Submit != "None"').query('Start != "Unknown"').query('Submit != "Unknown"').query('NodeList != "None assigned"')
     log = log.loc[:, ['NCPUS', 'Submit', 'Start']]
@@ -256,7 +256,7 @@ def wait_time(log):
 
 def work_time(log):
     '''
-    
+    log(dataframe) -> log[NCPUS, work_time(second)]
     '''
     log = log.query('Group != ""').query('Start != "None"').query('End != "None"').query('Start != "Unknown"').query('End != "Unknown"').query('NodeList != "None assigned"')
     log = log.loc[:, ['NCPUS', 'Start', 'End']]
@@ -269,7 +269,7 @@ def work_time(log):
 
 def cancel_time(log):
     '''
-    
+    log(dataframe) -> log[NCPUS, cancel_time(second)]
     '''
     log = log.query('Group != ""').query('Start == "None"').query('Submit != "None"').query('End != "None"').query('Submit != "Unknown"').query('End != "Unknown"')
     log = log.loc[:, ['NCPUS', 'Submit', 'End']]
