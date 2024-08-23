@@ -5,12 +5,19 @@ import plotly.express as px
 import plotly.io as pio
 
 '''
+This part will catch following data from transform.py:
 usage(log, unit=300):   log(dataframe) -> {'cpu_use_rate'(dataframe), 'cpu_occupy'(dataframe), 'cpu_occupy_backfill'(dataframe)}
 wait_time(log):         log(dataframe) -> log[NCPUS, wait_time(second)]
 work_time(log):         log(dataframe) -> log[NCPUS, work_time(second)]
 cancel_time(log):       log(dataframe) -> log[NCPUS, cancel_time(second)]
 submit_partition(log):  log(dataframe) -> {map[Partition * submit_time(second in weekday)], x_sub, y_sub}
 ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
+
+And will draw 4 type of picture to visualize the data by following function:
+plot_usage_heatmap(df, title, df2=None)
+plot_time_scatter(data, y_title, title)
+plot_submit_heatmap(log)
+plot_cumulative(log)
 '''
 
 
