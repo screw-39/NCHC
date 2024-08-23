@@ -81,7 +81,7 @@ def plot_usage_heatmap(df, title, df2=None):
     )
 
     fig.show()
-    pio.write_image(fig, f'{title}.png', width=24*200, height=16*200, scale=2)
+    #pio.write_image(fig, f'{title}.png', width=24*200, height=16*200, scale=2)
 
 def plot_time_scatter(data, y_title, title):
     # data[#CPU, time]
@@ -161,22 +161,26 @@ def plot_time_scatter(data, y_title, title):
     #pio.write_image(fig, f'{title}.png', scale=2)
 
 def plot_submit_heatmap(log):
+    '''
+    log(dict) -> submit_heatmap
+    log = {map[Partition * submit_time(second in weekday)], x_sub, y_sub}
+    '''
     fig = go.Figure(data=go.Heatmap(
-        z=test.values,
-        x=test.columns,
-        y=test.index,
+        z=log['map'].values,
+        x=log['map'].columns,
+        y=log['map'].index,
         colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(125,125,255)'], [1, 'rgb(0,0,255)']],
         showscale=False,
         colorbar=dict(thickness=20, ticklen=4),
         zmin=0,  # 最小值為0
-        zmax=test.values.max(),
+        zmax=log['map'].values.max(),
         xaxis = 'x',
         yaxis = 'y'
     ))
 
     fig.add_trace(go.Bar(
-            x = df2['y'],
-            y = df2.Submit_time,
+            x = log['x_sub']['y'],
+            y = log['x_sub']['Submit_time'],
             xaxis = 'x2',
             yaxis = 'y',
             marker = {
@@ -189,8 +193,8 @@ def plot_submit_heatmap(log):
         ))
 
     fig.add_trace(go.Bar(
-            x = df.Partition,
-            y = df.y,
+            x = log['x_sub']['Partition'],
+            y = log['x_sub']['y'],
             xaxis = 'x',
             yaxis = 'y2',
             marker = {
@@ -198,8 +202,8 @@ def plot_submit_heatmap(log):
                 }
         ))
 
-    week_ticks = [0, 86400, 172800, 259200, 345600, 432000, 518400]
-    week_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    #week_ticks = [0, 86400, 172800, 259200, 345600, 432000, 518400]
+    #week_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     fig.update_layout(
         #title={'text':'test', 'font':{'size': 70}},
@@ -355,16 +359,15 @@ def plot_submit_heatmap(log):
         xref="x2",  # 對應主 x 軸
         yref="y1",  # 對應主 y 軸
     )
+    fig.show()
+    #pio.write_image(fig, f'CPU_vs_cumulative_count.png', scale=2)
 
-def plot_cumulative():
+def plot_cumulative(log):
     fig = go.Figure()
-    fig_area = px.area(x=df.iloc[:,0], y=df.iloc[:,2])
+    fig_area = px.area(x=log.iloc[:,0], y=log.iloc[:,2])
     for trace in fig_area.data:
         fig.add_trace(trace)
-    fig.add_trace(go.Bar(x=df.iloc[:,0], y=df.iloc[:,2]))
-    #fig.add_trace(go.Area(x=df.iloc[:,0], y=df.iloc[:,2]))
-    #fig = px.area(df, x='#CPU', y='cumulative')
-    #fig = px.bar(df, x='#CPU', y='cumulative')
+    fig.add_trace(go.Bar(x=log.iloc[:,0], y=log.iloc[:,2]))
 
     fig.update_layout(
         title={'text':'#CPU v.s. cumulative count', 'font':{'size':30}},
@@ -382,10 +385,10 @@ def plot_cumulative():
             type='line', line=dict(dash='dash'),
             name = '95%',
             x0 = 0,
-            x1 = df.iloc[-1,0],
-            y0 = i*0.95,
-            y1 = i*0.95
+            x1 = log.iloc[-1,0],
+            y0 = log.iloc[-1,1]*0.95,
+            y1 = log.iloc[-1,1]*0.95
         )
         
     fig.show()
-    pio.write_image(fig, f'CPU_vs_cumulative_count.png', scale=2)
+    #pio.write_image(fig, f'CPU_vs_cumulative_count.png', scale=2)
