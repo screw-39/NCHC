@@ -67,7 +67,7 @@ def run_functions_in_parallel(log):
 def run(data, multiprocessing=0):
     log = extract(data)
     if multiprocessing:
-        run_functions_in_parallel(data)
+        run_functions_in_parallel(log)
 
     else:
         work_flow_usage(log)
