@@ -92,7 +92,7 @@ def plot_usage_heatmap(df, df2, title):
     fig.show()
     #pio.write_image(fig, f'{title}.png', width=24*200, height=16*200, scale=2)
 
-def plot_time_scatter(data, y_title, title):
+def plot_time_scatter(data, title):
     '''
     Draw ncpus dependence scatter
     data[NCPUS, wait_time(second)]
@@ -100,7 +100,6 @@ def plot_time_scatter(data, y_title, title):
     fig = go.Figure(go.Scatter(
         x=data.iloc[:, 0],
         y=data.iloc[:, 1],
-        name=y_title,
         mode='markers',
         marker={'opacity':0.4}
         ))
