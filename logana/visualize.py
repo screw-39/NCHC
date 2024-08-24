@@ -14,15 +14,18 @@ submit_partition(log):  log(dataframe) -> {map[Partition * submit_time(second in
 ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
 
 And will draw 4 type of picture to visualize the data by following function:
-plot_usage_heatmap(df, title, df2=None)
+plot_usage_heatmap(df, df2, title)
 plot_time_scatter(data, y_title, title)
 plot_submit_heatmap(log)
 plot_cumulative(log)
 '''
 
 
-def plot_usage_heatmap(df, title, df2=None):
-    # Draw heatmap
+def plot_usage_heatmap(df, df2, title):
+    '''
+    Draw heatmap
+    df, df2 = dataframe[node, time]
+    '''
     fig = go.Figure(data=go.Heatmap(
         z=df.values,
         x=df.columns,
@@ -34,20 +37,19 @@ def plot_usage_heatmap(df, title, df2=None):
         zmax=df.values.max()
     ))
 
-    if df2 != None:
-        fig.add_trace(
-            go.Heatmap(
-            z=df2.values,
-            x=df2.columns,
-            y=df2.index,
-            colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(255,200,200)'], [1, 'rgb(255,0,0)']],
-            showscale=False,
-            opacity=0.5,
-            colorbar=dict(thickness=20, ticklen=4),
-            zmin=0,  # 最小值為0
-            zmax=df2.values.max()
-        )
-        )
+    fig.add_trace(
+        go.Heatmap(
+        z=df2.values,
+        x=df2.columns,
+        y=df2.index,
+        colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(255,200,200)'], [1, 'rgb(255,0,0)']],
+        showscale=False,
+        opacity=0.5,
+        colorbar=dict(thickness=20, ticklen=4),
+        zmin=0,  # 最小值為0
+        zmax=df2.values.max()
+    )
+    )
 
     fig.update_layout(
         title={'text':title, 'font':{'size': 70}},
@@ -91,7 +93,10 @@ def plot_usage_heatmap(df, title, df2=None):
     #pio.write_image(fig, f'{title}.png', width=24*200, height=16*200, scale=2)
 
 def plot_time_scatter(data, y_title, title):
-    # data[#CPU, time]
+    '''
+    Draw ncpus dependence scatter
+    data[NCPUS, wait_time(second)]
+    '''
     fig = go.Figure(go.Scatter(
         x=data.iloc[:, 0],
         y=data.iloc[:, 1],
