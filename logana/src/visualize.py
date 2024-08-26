@@ -171,8 +171,8 @@ def plot_time_scatter(data, title):
             y1 = 3600*24*7
         )
 
-    #fig.show()
-    pio.write_image(fig, f'{title}.png', scale=2)
+    fig.show()
+    #pio.write_image(fig, f'{title}.png', scale=2)
 
 def plot_submit_heatmap(log):
     '''
