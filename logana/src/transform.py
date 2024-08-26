@@ -154,7 +154,7 @@ def job_processor(row, trans_firsttime, unittime):
         jobend (int):                  *End unit* of the job
         nodelist (list[str]):          All nodes the job works
         allocated_cpu (list[float]):   Number of allocated CPU
-        cpu_useratio (list[float]):    Utilization of CPU (wait to fix)
+        cpu_useratio (list[float]):    Utilization of CPU    <-----------------------(wait to fix): fix function of useratio and time_to_seconds('%D-' in the time)
         allocated_cpu(backfill):       Number of allocated CPU(backfill)
     
     Parameters:
@@ -181,7 +181,7 @@ def job_processor(row, trans_firsttime, unittime):
     
     # allocated_cpu part
     try: 
-        #row.AllocCPUS / int(row.AllocNodes
+        #row.AllocCPUS / int(row.AllocNodes)
         allocated_value = int(row.AllocCPUS) / int(row.AllocNodes)
         allocated_cpu = [allocated_value for _ in range(jobend - jobstart + 1)]
         
@@ -197,7 +197,7 @@ def job_processor(row, trans_firsttime, unittime):
     # allocated_cpu_backfill part
     if 'Backfill' in row.Flags:
         try: 
-            #row.AllocCPUS / int(row.AllocNodes
+            #row.AllocCPUS / int(row.AllocNodes)
             allocated_value_Backfill = int(row.AllocCPUS) / int(row.AllocNodes)
             allocated_cpu_Backfill = [allocated_value_Backfill for _ in range(jobend - jobstart + 1)]
             
@@ -214,20 +214,20 @@ def job_processor(row, trans_firsttime, unittime):
         allocated_cpu_Backfill = [0]
     
     # cpu_useratio part
-    try:
-        useratio_value = (time_to_seconds(row.TotalCPU) / (time_translator(row.End) - time_translator(row.Start)) / int(row.AllocCPUS))
-        cpu_useratio = [useratio_value for _ in range(jobend - jobstart + 1)]
+    # try:
+    #     useratio_value = (time_to_seconds(row.TotalCPU) / (time_translator(row.End) - time_translator(row.Start)) / int(row.AllocCPUS))
+    #     cpu_useratio = [useratio_value for _ in range(jobend - jobstart + 1)]
         
-        if (jobend - jobstart) > 0:
-            cpu_useratio[0] = useratio_value*(1 - (((time_translator(row.Start) - trans_firsttime) % unittime) / unittime))
-            cpu_useratio[-1] = useratio_value*(((time_translator(row.End) - trans_firsttime) % unittime) / unittime)
-        else:
-            cpu_useratio[0] = useratio_value*((time_translator(row.End) - time_translator(row.Start)) / unittime)
+    #     if (jobend - jobstart) > 0:
+    #         cpu_useratio[0] = useratio_value*(1 - (((time_translator(row.Start) - trans_firsttime) % unittime) / unittime))
+    #         cpu_useratio[-1] = useratio_value*(((time_translator(row.End) - trans_firsttime) % unittime) / unittime)
+    #     else:
+    #         cpu_useratio[0] = useratio_value*((time_translator(row.End) - time_translator(row.Start)) / unittime)
 
-    except:
-        cpu_useratio = [0]
+    # except:
+    #     cpu_useratio = [0]
 
-    result = {'jobstart':jobstart, 'jobend':jobend, 'nodelist':nodelist, 'allocated_cpu':allocated_cpu, 'backfill_allocated_cpu':allocated_cpu_Backfill, 'cpu_useratio':cpu_useratio}
+    result = {'jobstart':jobstart, 'jobend':jobend, 'nodelist':nodelist, 'allocated_cpu':allocated_cpu, 'backfill_allocated_cpu':allocated_cpu_Backfill}
     return result
 
 def usage(log, unit=300):
@@ -238,7 +238,7 @@ def usage(log, unit=300):
 
     #clean the log for processing
     log = log.query('Group != ""').query('Start != "None"').query('End != "None"').query('Start != "Unknown"').query('End != "Unknown"').query('NodeList != "None assigned"')
-    log = log.loc[:, ['Start', 'End', 'NodeList', 'AllocCPUS', 'TotalCPU', 'Flags']]
+    log = log.loc[:, ['Start', 'End', 'NodeList', 'AllocCPUS', 'AllocNodes', 'TotalCPU', 'Flags']]
 
     #NODEMAX = 598
     firsttime = log.End.sort_values(ascending=1).iloc[0]

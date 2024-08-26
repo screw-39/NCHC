@@ -44,7 +44,7 @@ def plot_usage_heatmap(df, df2, title):
         y=df2.index,
         colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(255,200,200)'], [1, 'rgb(255,0,0)']],
         showscale=False,
-        opacity=0.3,
+        opacity=0.4,
         colorbar=dict(thickness=20, ticklen=4),
         zmin=0,  # 最小值為0
         zmax=df2.values.max()
