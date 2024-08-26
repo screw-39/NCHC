@@ -80,7 +80,7 @@ def run(data, multiprocessing=0):
 
 if __name__ == '__main__':
     starttime = time.time()
-    run('C:/Users/2403037/Documents/sidework/NCHC/logana/log/f1/20240801_hpc_jobs_log.txt')
+    run('../log/f1/example.log')
     print('USED TIME: {:0.3f} seconds'.format(time.time() - starttime))
     
     
