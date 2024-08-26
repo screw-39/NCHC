@@ -212,18 +212,17 @@ def job_processor(row, trans_firsttime, unittime):
 
     else:
         allocated_cpu_Backfill = [0]
-        result.append(allocated_cpu_Backfill)
     
     # cpu_useratio part
     try:
         useratio_value = (time_to_seconds(row.TotalCPU) / (time_translator(row.End) - time_translator(row.Start)) / int(row.AllocCPUS))
-        useratio_cpu = [useratio_value for _ in range(jobend - jobstart + 1)]
+        cpu_useratio = [useratio_value for _ in range(jobend - jobstart + 1)]
         
         if (jobend - jobstart) > 0:
-            useratio_cpu[0] = useratio_value*(1 - (((time_translator(row.Start) - trans_firsttime) % unittime) / unittime))
-            useratio_cpu[-1] = useratio_value*(((time_translator(row.End) - trans_firsttime) % unittime) / unittime)
+            cpu_useratio[0] = useratio_value*(1 - (((time_translator(row.Start) - trans_firsttime) % unittime) / unittime))
+            cpu_useratio[-1] = useratio_value*(((time_translator(row.End) - trans_firsttime) % unittime) / unittime)
         else:
-            useratio_cpu[0] = useratio_value*((time_translator(row.End) - time_translator(row.Start)) / unittime)
+            cpu_useratio[0] = useratio_value*((time_translator(row.End) - time_translator(row.Start)) / unittime)
 
     except:
         cpu_useratio = [0]
@@ -293,11 +292,15 @@ def wait_time(log):
     log = log.query('Group != ""').query('Start != "None"').query('Submit != "None"').query('Start != "Unknown"').query('Submit != "Unknown"').query('NodeList != "None assigned"')
     log = log.loc[:, ['NCPUS', 'Submit', 'Start']]
     log.Start = log.Start.apply(time_translator)
-    log.Submit = log.Submit.Submit(time_translator)
+    log.Submit = log.Submit.apply(time_translator)
+    log.NCPUS = log.NCPUS.apply(int)
     log['wait_time'] = log['Start'] - log['Submit']
-    log = log.loc[:, ['NCPUS', 'wait_time']].sort_values(by=['#CPU'])
+    log = log.loc[:, ['NCPUS', 'wait_time']].sort_values(by=['NCPUS'])
 
-    return log
+    average = log.groupby('NCPUS').describe().iloc[:,1]
+    average = pd.DataFrame({'NCPUS':average.index, 'average_time':average})
+
+    return {'log':log, 'average':average}
 
 def work_time(log):
     '''
@@ -307,10 +310,14 @@ def work_time(log):
     log = log.loc[:, ['NCPUS', 'Start', 'End']]
     log.Start = log.Start.apply(time_translator)
     log.End = log.End.apply(time_translator)
+    log.NCPUS = log.NCPUS.apply(int)
     log['work_time'] = log['End'] - log['Start']
-    log = log.loc[:, ['NCPUS', 'work_time']].sort_values(by=['#CPU'])
+    log = log.loc[:, ['NCPUS', 'work_time']].sort_values(by=['NCPUS'])
 
-    return log
+    average = log.groupby('NCPUS').describe().iloc[:,1]
+    average = pd.DataFrame({'NCPUS':average.index, 'average_time':average})
+
+    return {'log':log, 'average':average}
 
 def cancel_time(log):
     '''
@@ -320,10 +327,14 @@ def cancel_time(log):
     log = log.loc[:, ['NCPUS', 'Submit', 'End']]
     log.Submit = log.Submit.apply(time_translator)
     log.End = log.End.apply(time_translator)
+    log.NCPUS = log.NCPUS.apply(int)
     log['cancel_time'] = log['End'] - log['Submit']
-    log = log.loc[:, ['NCPUS', 'cancel_time']].sort_values(by=['#CPU'])
+    log = log.loc[:, ['NCPUS', 'cancel_time']].sort_values(by=['NCPUS'])
 
-    return log
+    average = log.groupby('NCPUS').describe().iloc[:,1]
+    average = pd.DataFrame({'NCPUS':average.index, 'average_time':average})
+
+    return {'log':log, 'average':average}
 
 def submit_partition(log):
     '''
@@ -348,15 +359,17 @@ def ncpu_job_count(log):
     '''
     log(dataframe) -> log[#cpu, job_count(cumulative)]
     '''
-    log = log.query('Group != ""').query('Submit != "None"').query('Submit != "Unknown"')
+    log = log.query('Group != ""').query('Submit != "None"').query('Submit != "Unknown"').query('NCPUS != ""')
     log = log.loc[:, ['NCPUS']]
     log = log.sort_values('NCPUS')
+    log['count'] = [1 for _ in range(len(log.NCPUS))]
     
-    cpu = [int(i) for i in log.groupby('#CPU').describe().index].sort()
+    cpu = [int(i) for i in log.groupby('NCPUS').describe().index]
+    cpu.sort()
     cumulative = []
     count = 0
     for c in cpu:
-        count += log[log.NCPUS == str(c)].count()
+        count += len(log[log.NCPUS == str(c)]['count'])
         cumulative.append(count)
     
     log = pd.DataFrame({'#CPU':cpu, 'count':cumulative})

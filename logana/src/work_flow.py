@@ -1,7 +1,8 @@
 import multiprocessing
-from .extract import *
-from .transform import *
-from .visualize import *
+from extract import *
+from transform import *
+from visualize import *
+import time
 
 '''
 -------------transfrom-------------
@@ -29,7 +30,7 @@ data -> ncpu_job_count -> plot_cumulative
 '''
 def work_flow_usage(log):
     usage_data = usage(log)
-    plot_usage_heatmap(usage_data['cpu_use_rate'], usage_data['cpu_occupy'], 'test')
+    plot_usage_heatmap(usage_data['cpu_use_rate'].T, usage_data['cpu_occupy'].T, 'test')
 
 def work_flow_wait_time(log):
     wait_time_data = wait_time(log)
@@ -71,11 +72,16 @@ def run(data, multiprocessing=0):
 
     else:
         work_flow_usage(log)
-        work_flow_wait_time(log)
-        work_flow_work_time(log)
-        work_flow_cancel_time(log)
-        work_flow_submit_partition(log)
-        work_flow_ncpu_job_count(log)
+        #work_flow_wait_time(log)
+        #work_flow_work_time(log)
+        #work_flow_cancel_time(log)
+        #work_flow_submit_partition(log)
+        #work_flow_ncpu_job_count(log)
+
+if __name__ == '__main__':
+    starttime = time.time()
+    run('C:/Users/2403037/Documents/sidework/NCHC/logana/log/f1/20240801_hpc_jobs_log.txt')
+    print('USED TIME: {:0.3f} seconds'.format(time.time() - starttime))
     
     
     

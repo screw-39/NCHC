@@ -44,7 +44,7 @@ def plot_usage_heatmap(df, df2, title):
         y=df2.index,
         colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(255,200,200)'], [1, 'rgb(255,0,0)']],
         showscale=False,
-        opacity=0.5,
+        opacity=0.3,
         colorbar=dict(thickness=20, ticklen=4),
         zmin=0,  # 最小值為0
         zmax=df2.values.max()
@@ -98,18 +98,21 @@ def plot_time_scatter(data, title):
     data[NCPUS, wait_time(second)]
     '''
     fig = go.Figure(go.Scatter(
-        x=data.iloc[:, 0],
-        y=data.iloc[:, 1],
+        x=data['log'].iloc[:, 0],
+        y=data['log'].iloc[:, 1],
         mode='markers',
         marker={'opacity':0.4}
         ))
-    
-    average_time = data.groupby('#CPU').describe().iloc[:,1]
 
     fig.update_traces(marker_color='rgb(0, 0, 0)', marker_line_color='rgb(0, 0, 0)',
                         marker_line_width=1.5, opacity=0.3)
 
-    fig.add_trace(go.Scatter(x=average_time[average_time > 1].index, y=average_time[average_time > 1], name='average'))
+    fig.add_trace(go.Scatter(
+        x=data['average'].query('average_time > 1').NCPUS,
+        y=data['average'].query('average_time > 1')['average_time'],
+        #mode='markers',
+        marker={'color':'rgb(255,0,0)'},
+        name='average'))
 
     fig.update_layout(
         plot_bgcolor='White',
@@ -117,12 +120,12 @@ def plot_time_scatter(data, title):
             'type':'log'
         },
         xaxis={
-            'title':'#CPU',
+            'title':'NCPUS',
             'type':'log',
             'range':[-0.1,4.8]
         },
         title={'text':title, 'font':{'size':30}},
-        xaxis_title={'text':'#CPU', 'font':{'size': 30}},
+        xaxis_title={'text':'NCPUS', 'font':{'size': 30}},
         yaxis_title={'text':'Seconds', 'font':{'size':30}},
         height=600,
         width=1700
@@ -168,8 +171,8 @@ def plot_time_scatter(data, title):
             y1 = 3600*24*7
         )
 
-    fig.show()
-    #pio.write_image(fig, f'{title}.png', scale=2)
+    #fig.show()
+    pio.write_image(fig, f'{title}.png', scale=2)
 
 def plot_submit_heatmap(log):
     '''
@@ -204,8 +207,8 @@ def plot_submit_heatmap(log):
         ))
 
     fig.add_trace(go.Bar(
-            x = log['x_sub']['Partition'],
-            y = log['x_sub']['y'],
+            x = log['y_sub']['Partition'],
+            y = log['y_sub']['y'],
             xaxis = 'x',
             yaxis = 'y2',
             marker = {
@@ -375,10 +378,10 @@ def plot_submit_heatmap(log):
 
 def plot_cumulative(log):
     fig = go.Figure()
-    fig_area = px.area(x=log.iloc[:,0], y=log.iloc[:,2])
+    fig_area = px.area(x=log.iloc[:,0], y=log.iloc[:,1])
     for trace in fig_area.data:
         fig.add_trace(trace)
-    fig.add_trace(go.Bar(x=log.iloc[:,0], y=log.iloc[:,2]))
+    fig.add_trace(go.Bar(x=log.iloc[:,0], y=log.iloc[:,1]))
 
     fig.update_layout(
         title={'text':'#CPU v.s. cumulative count', 'font':{'size':30}},

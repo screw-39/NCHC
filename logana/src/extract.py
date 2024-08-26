@@ -1,6 +1,6 @@
 import pandas as pd
 
-def extract(log_path, save_parquet=0, parquet_path=None):
+def extract(data_path, save_parquet=0, parquet_name=None):
     """
     log(txt) -> df_log(dataframe)
 
@@ -9,7 +9,7 @@ def extract(log_path, save_parquet=0, parquet_path=None):
     parquet_name(str):   where you want to save the parquet
     """
 
-    log = log_path
+    log = data_path
 
     with open(log, 'r', encoding="utf-8") as f:
         lines = f.readlines()
@@ -26,9 +26,6 @@ def extract(log_path, save_parquet=0, parquet_path=None):
     df_log = pd.DataFrame(df_log)
     
     if save_parquet == True:
-        df_log.to_parquet(parquet_path)
+        df_log.to_parquet('.log/' + parquet_name)
 
     return df_log
-
-if __name__ == '__main__':
-    pass
