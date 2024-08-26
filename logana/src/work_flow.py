@@ -62,16 +62,10 @@ def run_functions_in_parallel(log):
         work_flow_ncpu_job_count(log)
         ]
     
-    # with multiprocessing.Pool(processes=6) as pool:
-    #     pool.map(lambda f: f(log), functions)
-
-    processes = []
-    for func in functions:
-        p = multiprocessing.Process(func, log)
-        processes.append(p)
-        p.start()
-    for process in processes:
-        process.join()
+    pool = multiprocessing.Pool(8)
+    pool.map_async(lambda f: f(log), functions)
+    pool.close()
+    pool.join()
 
 def run(data, multiprocessing=0):
     log = extract(data)
@@ -88,7 +82,7 @@ def run(data, multiprocessing=0):
 
 if __name__ == '__main__':
     starttime = time.time()
-    run('C:/Users/2403037/Documents/sidework/NCHC/logana/log/example.log', 1)
+    run('../log/example.log')
     print('USED TIME: {:0.3f} seconds'.format(time.time() - starttime))
     
     
