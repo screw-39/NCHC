@@ -31,4 +31,4 @@ This repository divide in four parts in `./src`.
 
 `work_flow.py` : Set the work flow of a analysis.
 
-If you want to add an analysis by yourself, you can and you anaysis function in `transform.py`. And then use the tool in `visual.py`, or add one by yourself, to generate the image. Finally, add a complete analysis work flow in `work_flow.py`.
+If you want to add an analysis by yourself, you can add you anaysis function in `transform.py`. And then use the tool in `visual.py`, or add one by yourself, to generate the image. Finally, add a complete analysis work flow in `work_flow.py`.
