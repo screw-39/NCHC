@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
@@ -16,8 +14,8 @@ ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
 And will draw 4 type of picture to visualize the data by following function:
 plot_usage_heatmap(df, df2, title)
 plot_time_scatter(data, y_title, title)
-plot_submit_heatmap(log)
-plot_cumulative(log)
+plot_submit_heatmap(log, title)
+plot_cumulative(log, title)
 '''
 
 
@@ -30,6 +28,7 @@ def plot_usage_heatmap(df, df2, title):
         z=df.values,
         x=df.columns,
         y=df.index,
+        name='normal',
         colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(200,200,255)'], [1, 'rgb(0,0,255)']],
         showscale=False,
         colorbar=dict(thickness=20, ticklen=4),
@@ -42,6 +41,7 @@ def plot_usage_heatmap(df, df2, title):
         z=df2.values,
         x=df2.columns,
         y=df2.index,
+        name='backfill',
         colorscale=[[0, 'rgb(255,255,255)'], [0.0001, 'rgb(255,200,200)'], [1, 'rgb(255,0,0)']],
         showscale=False,
         opacity=0.4,
@@ -52,15 +52,17 @@ def plot_usage_heatmap(df, df2, title):
     )
 
     fig.update_layout(
-        title={'text':title, 'font':{'size': 70}},
+        title={'text':'Cluster CPU State', 'font':{'size': 70}},
         xaxis_nticks=36,
         plot_bgcolor='White',  # 將背景設置為白色
         #width=500,  # 圖的寬度
-        height=1800,
+        height=2000,
         yaxis={'tickfont':{'size':60}},  # 調整y軸標籤字體大小
         xaxis={'tickfont':{'size':60}},
+        xaxis_title={'text':'Time', 'font':{'size': 60}},
+        yaxis_title={'text':'Nodes', 'font':{'size':60}},
         #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
-        showlegend=False
+        #showlegend=False
     )
 
     fig.update_traces(hoverongaps=False)  # 不顯示空值的tooltip
@@ -89,8 +91,8 @@ def plot_usage_heatmap(df, df2, title):
         y1 = "icpnq256"
     )
 
-    fig.show()
-    #pio.write_image(fig, f'{title}.png', width=24*200, height=16*200, scale=2)
+    #fig.show()
+    pio.write_image(fig, f'../image/{title}.png', width=24*200, height=16*200, scale=2)
 
 def plot_time_scatter(data, title):
     '''
@@ -101,7 +103,8 @@ def plot_time_scatter(data, title):
         x=data['log'].iloc[:, 0],
         y=data['log'].iloc[:, 1],
         mode='markers',
-        marker={'opacity':0.4}
+        marker={'opacity':0.4},
+        name='actual'
         ))
 
     fig.update_traces(marker_color='rgb(0, 0, 0)', marker_line_color='rgb(0, 0, 0)',
@@ -124,9 +127,9 @@ def plot_time_scatter(data, title):
             'type':'log',
             'range':[-0.1,4.8]
         },
-        title={'text':title, 'font':{'size':30}},
+        title={'text':'Ask #CPU v.s. Cost Time', 'font':{'size':30}},
         xaxis_title={'text':'NCPUS', 'font':{'size': 30}},
-        yaxis_title={'text':'Seconds', 'font':{'size':30}},
+        yaxis_title={'text':'Cost time(second)', 'font':{'size':30}},
         height=600,
         width=1700
     )
@@ -171,10 +174,10 @@ def plot_time_scatter(data, title):
             y1 = 3600*24*7
         )
 
-    fig.show()
-    #pio.write_image(fig, f'{title}.png', scale=2)
+    #fig.show()
+    pio.write_image(fig, f'../image/{title}.png', scale=2)
 
-def plot_submit_heatmap(log):
+def plot_submit_heatmap(log, title):
     '''
     log(dict) -> submit_heatmap
     log = {map[Partition * submit_time(second in weekday)], x_sub, y_sub}
@@ -220,11 +223,15 @@ def plot_submit_heatmap(log):
     #week_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     fig.update_layout(
-        #title={'text':'test', 'font':{'size': 70}},
+        title={'text':'Submit Time v.s. Partition',
+                'font':{'size': 40}
+                },
+        xaxis_title={'text':"Partition", 'font':{'size':30}},
+        yaxis_title={'text':'Time in Weekdays(second)', 'font':{'size':30}},
         #xaxis_nticks=36,
         plot_bgcolor='White',  # 將背景設置為白色
-        width=1200,  # 圖的寬度
-        height=1800,
+        width=1500,  # 圖的寬度
+        height=2000,
         #yaxis={'tickfont':{'size':60}},  # 調整y軸標籤字體大小
         #xaxis={'tickfont':{'size':60}},
         #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
@@ -373,10 +380,10 @@ def plot_submit_heatmap(log):
         xref="x2",  # 對應主 x 軸
         yref="y1",  # 對應主 y 軸
     )
-    fig.show()
-    #pio.write_image(fig, f'CPU_vs_cumulative_count.png', scale=2)
+    #fig.show()
+    pio.write_image(fig, f'../image/{title}.png', scale=2)
 
-def plot_cumulative(log):
+def plot_cumulative(log, title):
     fig = go.Figure()
     fig_area = px.area(x=log.iloc[:,0], y=log.iloc[:,1])
     for trace in fig_area.data:
@@ -404,5 +411,5 @@ def plot_cumulative(log):
             y1 = log.iloc[-1,1]*0.95
         )
         
-    fig.show()
-    #pio.write_image(fig, f'CPU_vs_cumulative_count.png', scale=2)
+    #fig.show()
+    pio.write_image(fig, f'../image/{title}.png', scale=2)
