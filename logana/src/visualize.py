@@ -62,7 +62,7 @@ def plot_usage_heatmap(df, df2, title):
         xaxis_title={'text':'Time', 'font':{'size': 60}},
         yaxis_title={'text':'Nodes', 'font':{'size':60}},
         #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
-        #showlegend=False
+        showlegend=False
     )
 
     fig.update_traces(hoverongaps=False)  # 不顯示空值的tooltip
@@ -92,7 +92,7 @@ def plot_usage_heatmap(df, df2, title):
     )
 
     #fig.show()
-    pio.write_image(fig, f'../image/{title}.png', width=24*200, height=16*200, scale=2)
+    pio.write_image(fig, f'../images/{title}.png', width=24*200, height=16*200, scale=2)
 
 def plot_time_scatter(data, title):
     '''
@@ -175,7 +175,7 @@ def plot_time_scatter(data, title):
         )
 
     #fig.show()
-    pio.write_image(fig, f'../image/{title}.png', scale=2)
+    pio.write_image(fig, f'../images/{title}.png', scale=2)
 
 def plot_submit_heatmap(log, title):
     '''
@@ -381,7 +381,7 @@ def plot_submit_heatmap(log, title):
         yref="y1",  # 對應主 y 軸
     )
     #fig.show()
-    pio.write_image(fig, f'../image/{title}.png', scale=2)
+    pio.write_image(fig, f'../images/{title}.png', scale=2)
 
 def plot_cumulative(log, title):
     fig = go.Figure()
@@ -412,4 +412,4 @@ def plot_cumulative(log, title):
         )
         
     #fig.show()
-    pio.write_image(fig, f'../image/{title}.png', scale=2)
+    pio.write_image(fig, f'../images/{title}.png', scale=2)
