@@ -54,18 +54,20 @@ def work_flow_ncpu_job_count(log):
 
 def run_functions_in_parallel(log):
     functions = [
-        work_flow_usage(log),
-        work_flow_wait_time(log),
-        work_flow_work_time(log),
-        work_flow_cancel_time(log),
-        work_flow_submit_partition(log),
-        work_flow_ncpu_job_count(log)
+        work_flow_usage,
+        work_flow_wait_time,
+        work_flow_work_time,
+        work_flow_cancel_time,
+        work_flow_submit_partition,
+        work_flow_ncpu_job_count
         ]
-    
-    pool = multiprocessing.Pool(8)
-    pool.map_async(lambda f: f(log), functions)
-    pool.close()
-    pool.join()
+    process = []
+    for function in functions:
+        p = multiprocessing.Process(target=function, args=(log,))
+        process.append(p)
+        p.start()
+    for p in process:
+        p.join()
 
 def run(data, multiprocessing=0):
     log = extract(data)
