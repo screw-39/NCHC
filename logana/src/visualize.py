@@ -52,17 +52,27 @@ def plot_usage_heatmap(df, df2, title):
     )
 
     fig.update_layout(
-        title={'text':'Cluster CPU State', 'font':{'size': 70}},
+        title={'text':'Cluster CPU State', 'font':{'size': 90}},
         xaxis_nticks=36,
         plot_bgcolor='White',  # 將背景設置為白色
         #width=500,  # 圖的寬度
         height=2000,
         yaxis={'tickfont':{'size':60}},  # 調整y軸標籤字體大小
         xaxis={'tickfont':{'size':60}},
-        xaxis_title={'text':'Time', 'font':{'size': 60}},
-        yaxis_title={'text':'Nodes', 'font':{'size':60}},
+        xaxis_title={'text':'Time', 'font':{'size': 80}},
+        yaxis_title={'text':'Nodes', 'font':{'size':80}},
         #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
-        showlegend=False
+        showlegend=False,
+        margin=dict(l=400, r=200, t=200, b=300),
+        shapes=[
+            # 添加一個矩形作為外框
+            dict(
+                type="rect",
+                x0=0, y0=0, x1=1, y1=1,
+                xref="paper", yref="paper",
+                line=dict(color="black", width=1)
+            ),
+        ]
     )
 
     fig.update_traces(hoverongaps=False)  # 不顯示空值的tooltip
@@ -92,7 +102,7 @@ def plot_usage_heatmap(df, df2, title):
     )
 
     #fig.show()
-    pio.write_image(fig, f'../images/{title}.png', width=24*200, height=16*200, scale=2)
+    pio.write_image(fig, f'../images/{title}.png', width=26*200, height=17*200, scale=2)
 
 def plot_time_scatter(data, title):
     '''
@@ -131,7 +141,16 @@ def plot_time_scatter(data, title):
         xaxis_title={'text':'NCPUS', 'font':{'size': 30}},
         yaxis_title={'text':'Cost time(second)', 'font':{'size':30}},
         height=600,
-        width=1700
+        width=1700,
+        shapes=[
+            # 添加一個矩形作為外框
+            dict(
+                type="rect",
+                x0=0, y0=0, x1=1, y1=1,
+                xref="paper", yref="paper",
+                line=dict(color="black", width=1)
+            ),
+        ]
     )
 
     fig.add_shape(
@@ -232,16 +251,19 @@ def plot_submit_heatmap(log, title):
         plot_bgcolor='White',  # 將背景設置為白色
         width=1500,  # 圖的寬度
         height=2000,
-        #yaxis={'tickfont':{'size':60}},  # 調整y軸標籤字體大小
-        #xaxis={'tickfont':{'size':60}},
+        # yaxis={'tickfont':{'size':20}},  # 調整y軸標籤字體大小
+        # xaxis={'tickfont':{'size':20}},
         #xaxis={'tickfont':{'size':60}, 'range':['2024-07-01T00:00:00','2024-07-17T00:00:00']},  # 調整x軸標籤字體大小
         showlegend=False,
+        margin=dict(l=150, r=150, t=150, b=150),
         xaxis = dict(
+            tickfont = {'size':20},
             zeroline = False,
             domain = [0,0.83],
             showgrid = False
         ),
         yaxis = dict(
+            tickfont = {'size':20},
             zeroline = False,
             domain = [0,0.83],
             showgrid = False

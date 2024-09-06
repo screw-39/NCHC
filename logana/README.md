@@ -13,11 +13,15 @@ Just need three step to do the analysis.
 sacct -pa --noconvert --units=M --delimiter="%|%" --format=AllocCPUS,AllocNodes,CPUTimeRAW,End,ExitCode,Flags,Group,JobID,JobName,NCPUS,NNodes,NodeList,NTasks,Partition,ReqCPUS,ReqMem,ReqNodes,Start,State,Submit,SystemCPU,TimelimitRaw,TotalCPU,UserCPU > example.log
 ```
 
+> This code just only need 
+> `AllocCPUS, AllocNodes, CPUTimeRAW, End, Flags, Group, NCPUS, NNodes, NodeList, NTasks, Partition, Start, Submit, SystemCPU ` actually. 
+> So you can chage `--format` by yourself to make the log smaller.
+
 2. Put the log file in `./log/`. There is already have an example log for the example. 
 
 3. Edit the log path in `./src/work_flow.py` and execute it.
 
-Wait for the analysis and you could find the result in `./images`.
+Wait for the analysis and you will find the result in `./images`.
 
 # How to add self analysis
 

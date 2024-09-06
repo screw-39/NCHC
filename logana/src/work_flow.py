@@ -14,10 +14,10 @@ submit_partition(log):  log(dataframe) -> {map[Partition * submit_time(second in
 ncpu_job_count(log):    log(dataframe) -> log[#cpu, job_count(cumulative)]
 
 -------------visualize-------------
-plot_usage_heatmap(df, df2, title)
-plot_time_scatter(data, title)
-plot_submit_heatmap(log, title)
-plot_cumulative(log, title)
+plot_usage_heatmap(*log1, *log2, title)
+plot_time_scatter(*log, title)
+plot_submit_heatmap(*log, title)
+plot_cumulative(*log, title)
 
 -------------work flow-------------
 data -> usage -> plot_usage_heatmap
