@@ -1,0 +1,6 @@
+# database
+*.db
+# output file
+output
+# neuron mechanism
+model
