@@ -1,6 +1,6 @@
 # database
-*.db
-# output file
-output
-# neuron mechanism
-model
+DB/*
+# output files
+output/*
+# neuron mechanisms
+model/*

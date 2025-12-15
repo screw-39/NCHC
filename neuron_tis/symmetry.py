@@ -58,7 +58,7 @@ def generate_sin_wave_pulses(
 
 def create_db():
     #connect to database
-    conn = sqlite3.connect('SYMMETRY.db')
+    conn = sqlite3.connect('./DB/SYMMETRY.db')
 
     #creat new table
     conn.execute('''CREATE TABLE TEST_PARAMETER(        
@@ -97,7 +97,7 @@ def create_db():
 def main(j, k):
     # ---------- Simulation parameters ----------
     cellParameters = {
-        'morphology' : 'ball_and_stick.hoc',
+        'morphology' : './model/ball_and_stick.hoc',
         'tstart' : 0, # ignore startup transients
         'tstop' : 20,
         'dt' : 2**-6,
@@ -106,8 +106,8 @@ def main(j, k):
     }
 
     # class RecExtElectrode parameters:
-    theta = j * np.pi / 180
-    ro = k * np.pi / 180
+    theta = j * np.pi / 18
+    ro = k * np.pi / 18
     print(f'theta: {theta}')
     electrodeParameters = dict(
         x=np.array([10*np.sin(ro)*np.cos(theta), 10*np.sin(ro+np.pi)*np.cos(theta+np.pi), 0, 0]),
@@ -156,10 +156,10 @@ def main(j, k):
         probes=[electrode],
         rec_vmem=True
     )
-    if not os.path.isfile('SYMMETRY.db'):
+    if not os.path.isfile('./DB/SYMMETRY.db'):
         create_db()
 
-    conn = sqlite3.connect('SYMMETRY.db')
+    conn = sqlite3.connect('./DB/SYMMETRY.db')
     c = conn.cursor()
 
     try:
@@ -190,6 +190,6 @@ def main(j, k):
     conn.close()
 
 if __name__ == "__main__":
-    for j in range(361):
-        for k in range(361):
+    for j in range(37):
+        for k in range(37):
             main(j, k)
