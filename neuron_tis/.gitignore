@@ -1,6 +1,6 @@
 # database
 DB/*
-# output files
-output/*
+!DB/.gitkeep
 # neuron mechanisms
 model/*
+!model/.gitkeep

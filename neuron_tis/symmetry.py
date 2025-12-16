@@ -63,8 +63,9 @@ def create_db():
     #creat new table
     conn.execute('''CREATE TABLE TEST_PARAMETER(        
             TEST_ID         INT      NOT NULL,
-            RO              REAL     NOT NULL,
             THETA           REAL     NOT NULL,
+            RO              REAL     NOT NULL,
+            ROLL            REAL     NOT NULL,
             AMPLITUDE       REAL     NOT NULL,
             FREQUENCY       REAL     NOT NULL,
             DELTA           REAL     NOT NULL,
@@ -94,6 +95,39 @@ def create_db():
     conn.commit()
     conn.close()
 
+def generate_3d_r_matrix(theta, ro, roll):
+    # 這裡是 Rz(ro) * Ry(theta) * Rx(roll) 的組合
+    # 這種寫法保證了不管怎麼轉，三個軸永遠垂直
+    # 預先計算三角函數
+    c_r, s_r = np.cos(ro), np.sin(ro)
+    c_t, s_t = np.cos(theta), np.sin(theta)
+    c_l, s_l = np.cos(roll), np.sin(roll)
+
+    # 微調後的矩陣：修正了 sin(theta) 的正負號，讓 theta > 0 時 P0 往 Z 軸正向移動 (抬頭)
+    R_matrix = np.array([
+        [c_r*c_t,   c_r*s_t*s_l - s_r*c_l,   c_r*s_t*c_l + s_r*s_l],
+        [s_r*c_t,   s_r*s_t*s_l + c_r*c_l,   s_r*s_t*c_l - c_r*s_l],
+        [-s_t,      c_t*s_l,                 c_t*c_l]              
+        # 注意：原本這裡可能是 -s_t，這取決於您想要 theta 正是朝上還是朝下
+        # 如果您發現抬頭方向相反，將上面矩陣中的 s_t 全部加負號即可
+    ])
+    return R_matrix
+
+def generate_electrodes_coord(R):
+    # 這裡定義三根軸的「原始長度向量」
+    # Axis 1 (原本指向上): (R, 0, 0)
+    # Axis 2 (原本指向前): (0, R, 0)
+    # Axis 3 (原本指向右): (0, 0, R)
+    p_init = np.array([
+    [R, 0, 0],   # P0 原始點
+    [-R, 0, 0],  # P1 原始點
+    [0, R, 0],   # P2 原始點
+    [0, -R, 0],  # P3 原始點
+    [0, 0, R],   # P4 原始點
+    [0, 0, -R],  # P5 原始點
+    ])
+    return p_init
+
 def main(j, k, l):
     # ---------- Simulation parameters ----------
     cellParameters = {
@@ -107,45 +141,19 @@ def main(j, k, l):
 
     # class RecExtElectrode parameters:
     # 1. 定義這三個角度 (由您的模擬環境提供)
-    # theta: 俯仰角 (Pitch) - 決定 P0 的高低
-    # ro     : 方位角 (Yaw)   - 決定 P0 的水平方向
-    # roll   : 側傾角 (Roll)  - 決定正方形是否要「歪著頭」旋轉 <--- 新增這個
-    # 如果沒有 roll 變數，可以設為 ro 或 theta 來製造連動的翻滾效果，或設常數 np.pi/4
-    theta = j * np.pi / 18
-    ro = k * np.pi / 18
-    roll = l * np.pi / 18
+    # theta  : y軸
+    # ro     : z軸
+    # roll   : x軸
+    theta = np.deg2rad(k) 
+    ro = np.deg2rad(l)
+    roll = np.deg2rad(j)
     R = 10
 
     # 2. 定義旋轉矩陣
-    # 這裡是 Rz(ro) * Ry(theta) * Rx(roll) 的組合
-    # 這種寫法保證了不管怎麼轉，三個軸永遠垂直
-
-    # 預先計算三角函數
-    c_r, s_r = np.cos(ro), np.sin(ro)
-    c_t, s_t = np.cos(theta), np.sin(theta)
-    c_l, s_l = np.cos(roll), np.sin(roll)
-
-    # 建構旋轉矩陣 (3x3 Matrix)
-    # 這個矩陣代表：先把物體側傾(roll)，再抬頭(theta)，再水平轉(ro)
-    R_matrix = np.array([
-    [c_r*c_t,  c_r*s_t*s_l - s_r*c_l,  c_r*s_t*c_l + s_r*s_l],
-    [s_r*c_t,  s_r*s_t*s_l + c_r*c_l,  s_r*s_t*c_l - c_r*s_l],
-    [-s_t,     c_t*s_l,                c_t*c_l]
-    ])
+    R_matrix = generate_3d_r_matrix(theta, ro, roll)
 
     # 3. 定義初始形狀 (原本躺好的正八面體)
-    # 這裡定義三根軸的「原始長度向量」
-    # Axis 1 (原本指向上): (10, 0, 0)
-    # Axis 2 (原本指向前): (0, 10, 0)
-    # Axis 3 (原本指向右): (0, 0, 10)
-    p_init = np.array([
-    [R, 0, 0],   # P0 原始點
-    [-R, 0, 0],  # P1 原始點
-    [0, R, 0],   # P2 原始點
-    [0, -R, 0],  # P3 原始點
-    [0, 0, R],   # P4 原始點
-    [0, 0, -R],  # P5 原始點
-    ]).T # 轉置以便矩陣相乘
+    p_init = generate_electrodes_coord(R).T # 轉置以便矩陣相乘
 
     # 4. 進行旋轉 (矩陣乘法)
     # 這行代碼會同時算出所有 6 個點的新座標
@@ -157,12 +165,11 @@ def main(j, k, l):
     z = p_rotated[2, :]
 
     # 如果 theta_1 和 ro 是陣列，上面的 ax3_z = 0 需要改成 np.zeros_like(theta_1)
-    print(f'theta: {theta}')
     electrodeParameters = dict(
         x=x,
         y=y,
         z=z,
-        N=np.array([[0., 0., 1.] for _ in range(4)]),
+        N=np.array([[0., 0., 1.] for _ in range(6)]),
         r=20.,  # 5um radius
         n=50,  # nb of discrete point used to compute the potential
         sigma=1,  # conductivity S/m
@@ -179,7 +186,7 @@ def main(j, k, l):
     dt = cell.dt
 
     amp1 = 0.1905*1e5 # 振幅 (nA)
-    amp2 = 0
+    amp2 = 0.276*1e5
     frequency = 1000
     delta = 20
     stim_elec_params = {
@@ -194,7 +201,7 @@ def main(j, k, l):
     electrode = LFPy.RecExtElectrode(cell=cell, **electrodeParameters)
     current, t_ext = generate_sin_wave_pulses(
                 width=width1,t_start=t_start, t_stop=t_stop, dt=dt,
-                stim_elec_params=stim_elec_params, num_electrodes=4
+                stim_elec_params=stim_elec_params, num_electrodes=6
             )     
     currents = np.array(current)
     electrode.probe.set_currents(currents)
@@ -219,11 +226,11 @@ def main(j, k, l):
 
     print(f"TEST_ID: {TEST_ID}")
     print("edit TEST_PARAMETER")
-    c.execute(f'''INSERT INTO TEST_PARAMETER (TEST_ID,RO,THETA,AMPLITUDE,FREQUENCY,DELTA)
-      VALUES ({TEST_ID}, {ro}, {theta}, {amp1}, {frequency}, {delta} );''')
+    c.execute(f'''INSERT INTO TEST_PARAMETER (TEST_ID,THETA,RO,ROLL,AMPLITUDE,FREQUENCY,DELTA)
+      VALUES ({TEST_ID}, {theta}, {ro}, {roll}, {amp2}, {frequency}, {delta} );''')
     
     print("edit ELECTRODE_PARAMETER")
-    for i in range(4):
+    for i in range(6):
         c.execute(f'''INSERT INTO ELECTRODE_PARAMETER (TEST_ID,ELECTRODE_ID,X,Y,Z)
         VALUES ({TEST_ID}, {i}, {electrodeParameters['x'][i]}, {electrodeParameters['y'][i]}, {electrodeParameters['z'][i]} );''')
 
@@ -239,6 +246,7 @@ def main(j, k, l):
     conn.close()
 
 if __name__ == "__main__":
-    for j in range(37):
-        for k in range(37):
-            main(j, k)
+    for j in range(0, 360, 10):
+        for k in range(0, 360, 10):
+            for l in range(0, 360, 10):
+                main(j, k, l)
