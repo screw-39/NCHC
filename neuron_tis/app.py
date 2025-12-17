@@ -7,16 +7,14 @@ import dash_bootstrap_components as dbc
 # -----------------------------------------
 # 1. 讀取資料庫
 # -----------------------------------------
-DB_PATH = "SYMMETRY_TEST.db"      # ← 修改成你的 SQLite 檔案路徑
+DB_PATH = "./DB/SYMMETRY.db"      # ← 修改成你的 SQLite 檔案路徑
 TABLE_TS = "TEST_VOLTAGE"    # TIME-VOLTAGE 資料表
 TABLE_PARAM = "TEST_PARAMETER"    # 參數表
 ELECTRODE_PARAM = "ELECTRODE_PARAMETER"
 
 def load_test_ids():
     conn = sqlite3.connect(DB_PATH)
-    # df = pd.read_sql_query(f"SELECT DISTINCT TEST_ID FROM {TABLE_TS} WHERE TEST_ID >= 733", conn)
-    df = pd.read_sql_query(f"SELECT DISTINCT TEST_ID FROM {TABLE_TS} WHERE TEST_ID >= 12 AND TEST_ID <= 732", conn)
-    # test1: id = 12, test2: id = 733
+    df = pd.read_sql_query(f"SELECT DISTINCT TEST_ID FROM {TABLE_TS}", conn)
     conn.close()
     return sorted(df["TEST_ID"].tolist())
 
@@ -60,7 +58,7 @@ app.layout = dbc.Container([
     ]),
 
     dbc.Row([
-        html.Label("Select Test (via θ):"),
+        html.Label("Select Test (via id):"),
         html.Div(id="slider-label", style={"fontSize": "20px", "textAlign": "center"}),
         
         dcc.Slider(
@@ -73,17 +71,6 @@ app.layout = dbc.Container([
         ),
         html.Br(),
     ]),
-
-    dbc.Row([
-        html.Label("Or input θ (°):"),
-        dcc.Input(
-            id="theta-input",
-            type="number",
-            value=0,
-            step=0.5
-        ),
-    ]),
-
     dbc.Row([
         dbc.Col([
             dcc.Graph(figure={}, id="voltage-plot"),
@@ -103,47 +90,11 @@ app.layout = dbc.Container([
     Input("test-slider", "value")
 )
 def update_slider_label(idx):
-    if test_ids[idx] > 732:
-        theta_now = (test_ids[idx] - 732) * 0.5
-        theta_min = (test_ids[0] - 732) * 0.5
-        theta_max = (test_ids[-1] - 732) * 0.5
-    else:
-        theta_now = (test_ids[idx] - 12) * 0.5
-        theta_min = (test_ids[0] - 12) * 0.5
-        theta_max = (test_ids[-1] - 12) * 0.5
+    id_now = test_ids[idx]
+    id_min = test_ids[0]
+    id_max = test_ids[-1]
 
-    return f"θ = {theta_now}°   (range: {theta_min}°  →  {theta_max}°)"
-
-# 1. Slider → Input
-@app.callback(
-    Output("theta-input", "value"),
-    Input("test-slider", "value")
-)
-def sync_input_from_slider(slider_index):
-    if test_ids[slider_index] > 732:
-        theta = (test_ids[slider_index] - 732) * 0.5
-    else:
-        theta = (test_ids[slider_index] - 12) * 0.5
-    return theta
-
-
-# 2. Input → Slider
-@app.callback(
-    Output("test-slider", "value"),
-    Input("theta-input", "value")
-)
-def sync_slider_from_input(theta):
-    if theta is None:
-        return 0
-
-    # 由 θ 反推 test_id
-    # target_test_id = int(theta / 0.5 + 732)
-    target_test_id = int(theta / 0.5 + 12)
-
-    # 找 test_ids 裡最接近的
-    nearest_index = min(range(len(test_ids)), key=lambda i: abs(test_ids[i] - target_test_id))
-
-    return nearest_index
+    return f"test id = {id_now} (range: {id_min} → {id_max})"
 
 @app.callback(
     Output("voltage-plot", "figure"),
@@ -163,10 +114,7 @@ def update_graph(selected_index):
         name=f"TEST {test_id}"
     ))
 
-    if test_id > 732:
-        title = f"Voltage vs Time (θ = {(test_id - 732) * 0.5}°)"
-    else:
-        title = f"Voltage vs Time (θ = {(test_id - 12) * 0.5}°)"
+    title = f"Voltage vs Time (id = {test_id})"
 
     fig.update_layout(
         xaxis_title="Time(ms)",
@@ -186,17 +134,17 @@ def update_graph(selected_index):
 def update_location_plot(selected_index):
 
     test_id = test_ids[selected_index]
-    df = load_electrodes(test_id).iloc[:2]
+    df = load_electrodes(test_id)
 
-    x = df["X"].iloc[:2]
-    y = df["Y"].iloc[:2]
-    z = df["Z"].iloc[:2]
+    x = df["X"]
+    y = df["Y"]
+    z = df["Z"]
 
     fig = go.Figure()
 
-    for i in range(2):
+    for i in range(4):
 
-        color = "red" if i == 0 else "blue"  # 高頻=紅色, 低頻=藍色
+        color = "red" if i%2 == 1 else "blue"  # 高頻=紅色, 低頻=藍色
         label = f"Electrode {i} ({2040-40*i} Hz)"
 
         fig.add_trace(go.Scatter3d(
