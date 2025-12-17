@@ -144,7 +144,7 @@ def update_location_plot(selected_index):
 
     for i in range(4):
 
-        color = "red" if i%2 == 1 else "blue"  # 高頻=紅色, 低頻=藍色
+        color = "red" if i%2 == 0 else "blue"  # 高頻=紅色, 低頻=藍色
         label = f"Electrode {i} ({2040-40*i} Hz)"
 
         fig.add_trace(go.Scatter3d(
@@ -157,13 +157,13 @@ def update_location_plot(selected_index):
         ))
 
     fig.add_trace(go.Scatter3d(
-        x=[0 for _ in range(6)], y=[0 for _ in range(6)], z=[-3+i for i in range(6)],
+        x=[0 for _ in range(31)], y=[0 for _ in range(31)], z=[-15+i for i in range(31)],
         mode="markers",
         marker=dict(size=10),
         name=f"Neuron(soma)"
     ))
     fig.add_trace(go.Scatter3d(
-        x=[0 for _ in range(10)], y=[0 for _ in range(10)], z=[3+i for i in range(10)],
+        x=[0 for _ in range(31)], y=[0 for _ in range(31)], z=[15+i for i in range(31)],
         mode="markers",
         marker=dict(size=3),
         name=f"Neuron(apic)"
@@ -171,9 +171,9 @@ def update_location_plot(selected_index):
 
     fig.update_layout(
         scene=dict(
-            xaxis=dict(title="X", range=[15,-15]),
-            yaxis=dict(title="Y", range=[15,-15]),
-            zaxis=dict(title="Z", range=[15,-15]),
+            xaxis=dict(title="X", range=[50,-50]),
+            yaxis=dict(title="Y", range=[50,-50]),
+            zaxis=dict(title="Z", range=[50,-50]),
             aspectmode='cube'
         ),
         scene_camera=dict(
