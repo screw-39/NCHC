@@ -21,7 +21,7 @@ def instantiate_cell(cellParameters):
             
     return cell
 
-#連續正弦波(從t=200開始)
+#連續正弦波
 def generate_sin_wave_pulses(
     width: float,
     t_start: float,
@@ -85,8 +85,8 @@ def generate_electrodes_coord(R):
     [-R, 0, 0],  # P1 原始點
     [0, R, 0],   # P2 原始點
     [0, -R, 0],  # P3 原始點
-    [0, 0, R],   # P4 原始點
-    [0, 0, -R],  # P5 原始點
+    [0, 0, -R],   # P4 原始點
+    [0, 0, R],  # P5 原始點
     ])
     return p_init
 
@@ -147,16 +147,20 @@ def main(j, k, l):
     t_start = 2   # (ms)
     t_stop = cell.tstop
     dt = cell.dt
-
+#-52~1 amp
+#R
     amp1 = 0.5519*1e5  #spike happened with 2 electrodes (nA / 0.001 uA)
     amp2 = 0.276*1e5   #spike happened with 4 electrodes (nA / 0.001 uA)
+    amp3 = 0.1815*1e5   #spike happened with 6 electrodes (nA / 0.001 uA)
     frequency = 1000
     delta = 20
     stim_elec_params = {
-        0:  {"amp": amp2, "freq": frequency + delta, "phase": np.pi }, #+x
-        1:  {"amp": amp2, "freq": frequency, "phase": np.pi },         #-x
-        2:  {"amp": amp2, "freq": frequency + delta, "phase": np.pi }, 
-        3:  {"amp": amp2, "freq": frequency, "phase": np.pi }, 
+        0:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, #+x
+        1:  {"amp": amp3, "freq": frequency, "phase": np.pi },         #-x
+        2:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, 
+        3:  {"amp": amp3, "freq": frequency, "phase": np.pi }, 
+        4:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, 
+        5:  {"amp": amp3, "freq": frequency, "phase": np.pi }, 
     }
 
     # ---- 對每個 cell 套用外加刺激（每次皆使用「新的」probe，避免快取形狀衝突）----
@@ -193,7 +197,7 @@ def main(j, k, l):
 
     fig = go.Figure()
     for i in range(6):
-        color = "red" if (i == 0) or (i == 2) else "blue"  # 高頻=紅色, 低頻=藍色
+        color = "red" if i%2 == 0 else "blue"  # 高頻=紅色, 低頻=藍色
         label = f"Electrode {i}"
         fig.add_trace(go.Scatter3d(
             x=[x[i]], y=[y[i]], z=[z[i]],
@@ -233,4 +237,4 @@ if __name__ == "__main__":
     # theta  : y軸
     # ro     : z軸
     # roll   : x軸
-    main(10, 0, 0)
+    main(0, 0, 0)

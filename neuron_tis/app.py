@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 # -----------------------------------------
 # 1. 讀取資料庫
 # -----------------------------------------
-DB_PATH = "./DB/SYMMETRY.db"      # ← 修改成你的 SQLite 檔案路徑
+DB_PATH = "./DB/2D_SYMMETRY.db"      # ← 修改成你的 SQLite 檔案路徑
 TABLE_TS = "TEST_VOLTAGE"    # TIME-VOLTAGE 資料表
 TABLE_PARAM = "TEST_PARAMETER"    # 參數表
 ELECTRODE_PARAM = "ELECTRODE_PARAMETER"
@@ -145,7 +145,7 @@ def update_location_plot(selected_index):
     for i in range(4):
 
         color = "red" if i%2 == 0 else "blue"  # 高頻=紅色, 低頻=藍色
-        label = f"Electrode {i} ({2040-40*i} Hz)"
+        label = f"Electrode {i} ({2040-40*(i%2)} Hz)"
 
         fig.add_trace(go.Scatter3d(
             x=[x[i]], y=[y[i]], z=[z[i]],

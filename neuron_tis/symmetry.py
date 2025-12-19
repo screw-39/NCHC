@@ -123,8 +123,8 @@ def generate_electrodes_coord(R):
     [-R, 0, 0],  # P1 原始點
     [0, R, 0],   # P2 原始點
     [0, -R, 0],  # P3 原始點
-    [0, 0, R],   # P4 原始點
-    [0, 0, -R],  # P5 原始點
+    [0, 0, -R],   # P4 原始點
+    [0, 0, R],  # P5 原始點
     ])
     return p_init
 
@@ -185,15 +185,18 @@ def main(j, k, l):
     t_stop = cell.tstop
     dt = cell.dt
 
-    amp1 = 0.1905*1e5 # 振幅 (nA)
-    amp2 = 0.276*1e5
+    amp1 = 0.5519*1e5  #spike happened with 2 electrodes (nA / 0.001 uA)
+    amp2 = 0.276*1e5   #spike happened with 4 electrodes (nA / 0.001 uA)
+    amp3 = 0.1815*1e5  #spike happened with 6 electrodes (nA / 0.001 uA)
     frequency = 1000
     delta = 20
     stim_elec_params = {
-        0:  {"amp": amp2, "freq": frequency + delta, "phase": np.pi }, #+x
-        1:  {"amp": amp2, "freq": frequency, "phase": np.pi },         #-x
-        2:  {"amp": amp2, "freq": frequency + delta, "phase": np.pi }, 
-        3:  {"amp": amp2, "freq": frequency, "phase": np.pi }, 
+        0:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, #+x
+        1:  {"amp": amp3, "freq": frequency, "phase": np.pi },         #-x
+        2:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, 
+        3:  {"amp": amp3, "freq": frequency, "phase": np.pi }, 
+        4:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, 
+        5:  {"amp": amp3, "freq": frequency, "phase": np.pi }, 
     }
 
     # ---- 對每個 cell 套用外加刺激（每次皆使用「新的」probe，避免快取形狀衝突）----
