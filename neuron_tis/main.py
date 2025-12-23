@@ -4,20 +4,24 @@ import LFPy
 import os
 import plotly.graph_objects as go
 import pandas as pd
+import MEAutility as mu
 
 neuron.h.load_file("stdrun.hoc")
+# neuron.h.nrn_load_dll("cell_models/mods/nrnmech.dll") # load NEURON mechanisms
+neuron.h.nrn_load_dll("nrnmech.dll") # load NEURON mechanisms
+neuron.h.celsius = 6.3 # set temperature
 
 def instantiate_cell(cellParameters):
     cell = LFPy.Cell(**cellParameters, delete_sections=True)
     cell.set_pos(x=0, y=0, z=0)
 
-    # insert hh mechanism in everywhere, reduced density elsewhere
-    for sec in cell.allseclist:
-        sec.insert('hh')
-        if not 'soma' in sec.name():
-            # reduce density of Na- and K-channels to 5% in dendrites
-            sec.gnabar_hh = 0.006
-            sec.gkbar_hh = 0.0018
+    # # insert hh mechanism in everywhere, reduced density elsewhere
+    # for sec in cell.allseclist:
+    #     sec.insert('hh')
+    #     if not 'soma' in sec.name():
+    #         # reduce density of Na- and K-channels to 5% in dendrites
+    #         sec.gnabar_hh = 0.006
+    #         sec.gkbar_hh = 0.0018
             
     return cell
 
@@ -85,156 +89,160 @@ def generate_electrodes_coord(R):
     [-R, 0, 0],  # P1 原始點
     [0, R, 0],   # P2 原始點
     [0, -R, 0],  # P3 原始點
-    [0, 0, -R],   # P4 原始點
-    [0, 0, R],  # P5 原始點
+    [0, 0, R],   # P4 原始點
+    [0, 0, -R],  # P5 原始點
     ])
     return p_init
 
 
 def main(j, k, l):
-    # ---------- Simulation parameters ----------
-    cellParameters = {
-        'morphology' : './model/ball_and_stick.hoc',
-        'tstart' : 0, # ignore startup transients
-        'tstop' : 20,
-        'dt' : 2**-6,
-        'v_init' : -60, 
-        'passive' : False,
-    }
+    probe = mu.return_mea('Neuronexus-3D')  
+#     # ---------- Simulation parameters ----------
+#     cellParameters = {
+#         'morphology' : './model/wc_ball_and _stick.hoc',
+#         'tstart' : -10, # ignore startup transients
+#         'tstop' : 500,
+#         'dt' : 2**-6,
+#         'v_init' : -60, 
+#         'passive' : False,
+#     }
 
-    # class RecExtElectrode parameters:
-    # 1. 定義這三個角度 (由您的模擬環境提供)
-    # theta  : y軸
-    # ro     : z軸
-    # roll   : x軸
-    theta = np.deg2rad(j) 
-    ro = np.deg2rad(k)
-    roll = np.deg2rad(l)
-    R = 10
+#     # class RecExtElectrode parameters:
+#     # 1. 定義這三個角度 (由您的模擬環境提供)
+#     # theta  : y軸
+#     # ro     : z軸
+#     # roll   : x軸
+#     theta = np.deg2rad(j) 
+#     ro = np.deg2rad(k)
+#     roll = np.deg2rad(l)
+#     R = 50
 
-    # 2. 定義旋轉矩陣
-    R_matrix = generate_3d_r_matrix(theta, ro, roll)
+#     # 2. 定義旋轉矩陣
+#     R_matrix = generate_3d_r_matrix(theta, ro, roll)
 
-    # 3. 定義初始形狀 (原本躺好的正八面體)
-    p_init = generate_electrodes_coord(R).T # 轉置以便矩陣相乘
+#     # 3. 定義初始形狀 (原本躺好的正八面體)
+#     p_init = generate_electrodes_coord(R).T # 轉置以便矩陣相乘
 
-    # 4. 進行旋轉 (矩陣乘法)
-    # 這行代碼會同時算出所有 6 個點的新座標
-    p_rotated = np.dot(R_matrix, p_init)
+#     # 4. 進行旋轉 (矩陣乘法)
+#     # 這行代碼會同時算出所有 6 個點的新座標
+#     p_rotated = np.dot(R_matrix, p_init)
 
-    # 5. 取出結果
-    x = p_rotated[0, :]
-    y = p_rotated[1, :]
-    z = p_rotated[2, :]
+#     # 5. 取出結果
+#     x = p_rotated[0, :]
+#     y = p_rotated[1, :]
+#     z = p_rotated[2, :]
 
-    # 如果 theta_1 和 ro 是陣列，上面的 ax3_z = 0 需要改成 np.zeros_like(theta_1)
-    electrodeParameters = dict(
-        x=x,
-        y=y,
-        z=z,
-        N=np.array([[0., 0., 1.] for _ in range(6)]),
-        r=20.,  # 5um radius
-        n=50,  # nb of discrete point used to compute the potential
-        sigma=1,  # conductivity S/m
-        method="linesource"
-        )
+#     # 如果 theta_1 和 ro 是陣列，上面的 ax3_z = 0 需要改成 np.zeros_like(theta_1)
+#     electrodeParameters = dict(
+#         x=x,
+#         y=y,
+#         z=z,
+#         N=np.array([[0., 0., 1.] for _ in range(6)]),
+#         r=20.,  # 5um radius
+#         n=50,  # nb of discrete point used to compute the potential
+#         sigma=1,  # conductivity S/m
+#         method="linesource"
+#         )
 
-    # create cell:
-    cell = instantiate_cell(cellParameters)
+#     # create cell:
+#     cell = instantiate_cell(cellParameters)
 
-    # Set stimulation parameters for one electrode
-    width1 = 1    # 脈衝寬度pluse width (ms)
-    t_start = 2   # (ms)
-    t_stop = cell.tstop
-    dt = cell.dt
-#-52~1 amp
-#R
-    amp1 = 0.5519*1e5  #spike happened with 2 electrodes (nA / 0.001 uA)
-    amp2 = 0.276*1e5   #spike happened with 4 electrodes (nA / 0.001 uA)
-    amp3 = 0.1815*1e5   #spike happened with 6 electrodes (nA / 0.001 uA)
-    frequency = 1000
-    delta = 20
-    stim_elec_params = {
-        0:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, #+x
-        1:  {"amp": amp3, "freq": frequency, "phase": np.pi },         #-x
-        2:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, 
-        3:  {"amp": amp3, "freq": frequency, "phase": np.pi }, 
-        4:  {"amp": amp3, "freq": frequency + delta, "phase": np.pi }, 
-        5:  {"amp": amp3, "freq": frequency, "phase": np.pi }, 
-    }
+#     # Set stimulation parameters for one electrode
+#     width1 = 100    # 脈衝寬度pluse width (ms)
+#     t_start = 15   # (ms)
+#     t_stop = cell.tstop
+#     dt = cell.dt
+# #-52~1 amp
+# #R
+#     amp1 = 0.5519*1e5  #spike happened with 2 electrodes  (R = 10)(nA / 0.001 uA)
+#     amp2 = 0.276*1e5   #spike happened with 4 electrodes  (R = 10)(nA / 0.001 uA)
+#     amp3 = 0.1815*1e5   #spike happened with 6 electrodes (R = 10)(nA / 0.001 uA)
+#     amp4 = 0.6012*1e6   #spike happened with 6 electrodes (R = 50)(nA / 0.001 uA)
+#     amp5 = 0.2207*1e6   #spike happened with 6 electrodes (R = 50, D = 23)(nA / 0.001 uA)
+#     amp6 = 0.1547*1e7   #spike happened with 4 electrodes (R = 50, D = 23)(nA / 0.001 uA)
+#     frequency = 1000
+#     delta = 20 #23
+#     stim_elec_params = {
+#         0:  {"amp": amp4, "freq": frequency + delta, "phase": np.pi }, #+x
+#         1:  {"amp": amp4, "freq": frequency, "phase": np.pi },         #-x
+#         2:  {"amp": amp4, "freq": frequency + delta, "phase": np.pi }, 
+#         3:  {"amp": amp4, "freq": frequency, "phase": np.pi }, 
+#         4:  {"amp": amp4, "freq": frequency + delta, "phase": np.pi }, 
+#         5:  {"amp": amp4, "freq": frequency, "phase": np.pi }, 
+#     }
 
-    # ---- 對每個 cell 套用外加刺激（每次皆使用「新的」probe，避免快取形狀衝突）----
-    # 呼叫函數
-    electrode = LFPy.RecExtElectrode(cell=cell, **electrodeParameters)
-    current, t_ext = generate_sin_wave_pulses(
-                width=width1,t_start=t_start, t_stop=t_stop, dt=dt,
-                stim_elec_params=stim_elec_params, num_electrodes=6
-            )     
-    currents = np.array(current)
-    electrode.probe.set_currents(currents)
-    v_ext = cell.enable_extracellular_stimulation(electrode, t_ext, n=5)
+#     # ---- 對每個 cell 套用外加刺激（每次皆使用「新的」probe，避免快取形狀衝突）----
+#     # 呼叫函數
+#     electrode = LFPy.RecExtElectrode(cell=cell, **electrodeParameters)
+#     current, t_ext = generate_sin_wave_pulses(
+#                 width=width1,t_start=t_start, t_stop=t_stop, dt=dt,
+#                 stim_elec_params=stim_elec_params, num_electrodes=6
+#             )     
+#     currents = np.array(current)
+#     electrode.probe.set_currents(currents)
+#     v_ext = cell.enable_extracellular_stimulation(electrode, t_ext, n=5)
 
-    # run simulation:
-    SPIKES = cell.simulate(
-        probes=[electrode],
-        rec_vmem=True
-    )
+#     # run simulation:
+#     SPIKES = cell.simulate(
+#         probes=[electrode],
+#         rec_vmem=True
+#     )
 
-    t = []
-    voltage = []
-    for i, v in enumerate(cell.somav):
-        t.append(i)
-        voltage.append(v)
-    df = pd.DataFrame({'TIME':t, 'VOLTAGE':voltage})
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df["TIME"],
-        y=df["VOLTAGE"],
-        mode="lines",
-    ))
-    fig.show()
+#     t = []
+#     voltage = []
+#     for i, v in enumerate(cell.somav):
+#         t.append(i)
+#         voltage.append(v)
+#     df = pd.DataFrame({'TIME':t, 'VOLTAGE':voltage})
+#     fig = go.Figure()
+#     fig.add_trace(go.Scatter(
+#         x=df["TIME"],
+#         y=df["VOLTAGE"],
+#         mode="lines",
+#     ))
+#     fig.show()
 
 
-    fig = go.Figure()
-    for i in range(6):
-        color = "red" if i%2 == 0 else "blue"  # 高頻=紅色, 低頻=藍色
-        label = f"Electrode {i}"
-        fig.add_trace(go.Scatter3d(
-            x=[x[i]], y=[y[i]], z=[z[i]],
-            mode="markers+text",
-            marker=dict(size=6, color=color),
-            text=[label],
-            textposition="top center",
-            name=label
-        ))
+#     fig = go.Figure()
+#     for i in range(6):
+#         color = "red" if i%2 == 0 else "blue"  # 高頻=紅色, 低頻=藍色
+#         label = f"Electrode {i}"
+#         fig.add_trace(go.Scatter3d(
+#             x=[x[i]], y=[y[i]], z=[z[i]],
+#             mode="markers+text",
+#             marker=dict(size=6, color=color),
+#             text=[label],
+#             textposition="top center",
+#             name=label
+#         ))
 
-    fig.add_trace(go.Scatter3d(
-    x=[0, 0], y=[0, 0], z=[15, -15],
-    line=dict(
-        color='yellow',
-        width=15
-        )
-    ))
-    fig.add_trace(go.Scatter3d(
-    x=[0, 0], y=[0, 0], z=[15, 45],
-    line=dict(
-        color='orange',
-        width=3
-        )
-    ))
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(title="X", range=[50,-50]),
-            yaxis=dict(title="Y", range=[50,-50]),
-            zaxis=dict(title="Z", range=[50,-50]),
-            aspectmode='cube'
-            ),
-        )
-    fig.show()
+#     fig.add_trace(go.Scatter3d(
+#     x=[0, 0], y=[0, 0], z=[15, -15],
+#     line=dict(
+#         color='yellow',
+#         width=15
+#         )
+#     ))
+#     fig.add_trace(go.Scatter3d(
+#     x=[0, 0], y=[0, 0], z=[-15, -30],
+#     line=dict(
+#         color='orange',
+#         width=3
+#         )
+#     ))
+#     fig.update_layout(
+#         scene=dict(
+#             xaxis=dict(title="X", range=[50,-50]),
+#             yaxis=dict(title="Y", range=[50,-50]),
+#             zaxis=dict(title="Z", range=[50,-50]),
+#             aspectmode='cube'
+#             ),
+#         )
+#     fig.show()
 
 
 if __name__ == "__main__":
-    # theta  : y軸
-    # ro     : z軸
-    # roll   : x軸
+    # theta  : Y軸
+    # ro     : Z軸
+    # roll   : X軸
     main(0, 0, 0)
