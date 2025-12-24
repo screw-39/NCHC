@@ -1,28 +1,15 @@
 import numpy as np
 import neuron
 import LFPy
-import os
 import plotly.graph_objects as go
 import pandas as pd
-import MEAutility as mu
 
-neuron.h.load_file("stdrun.hoc")
-# neuron.h.nrn_load_dll("cell_models/mods/nrnmech.dll") # load NEURON mechanisms
-neuron.h.nrn_load_dll("nrnmech.dll") # load NEURON mechanisms
+neuron.h.nrn_load_dll("model/mods/nrnmech.dll") # load NEURON mechanisms
 neuron.h.celsius = 6.3 # set temperature
 
 def instantiate_cell(cellParameters):
     cell = LFPy.Cell(**cellParameters, delete_sections=True)
     cell.set_pos(x=0, y=0, z=0)
-
-    # # insert hh mechanism in everywhere, reduced density elsewhere
-    # for sec in cell.allseclist:
-    #     sec.insert('hh')
-    #     if not 'soma' in sec.name():
-    #         # reduce density of Na- and K-channels to 5% in dendrites
-    #         sec.gnabar_hh = 0.006
-    #         sec.gkbar_hh = 0.0018
-            
     return cell
 
 #連續正弦波
@@ -94,15 +81,14 @@ def generate_electrodes_coord(R):
     ])
     return p_init
 
-
 def main(j, k, l):
     # ---------- Simulation parameters ----------
     cellParameters = {
         'morphology' : './model/wc_ball_and _stick.hoc',
         'tstart' : -10, # ignore startup transients
-        'tstop' : 500,
+        'tstop' : 20,
         'dt' : 2**-6,
-        'v_init' : -60, 
+        'v_init' : -65, 
         'passive' : False,
     }
 
@@ -114,7 +100,7 @@ def main(j, k, l):
     theta = np.deg2rad(j) 
     ro = np.deg2rad(k)
     roll = np.deg2rad(l)
-    R = 50
+    R = 100
 
     # 2. 定義旋轉矩陣
     R_matrix = generate_3d_r_matrix(theta, ro, roll)
@@ -147,27 +133,24 @@ def main(j, k, l):
     cell = instantiate_cell(cellParameters)
 
     # Set stimulation parameters for one electrode
-    width1 = 100    # 脈衝寬度pluse width (ms)
-    t_start = 15   # (ms)
+    width1 = 1    # 脈衝寬度pluse width (ms)
+    t_start = 10   # (ms)
     t_stop = cell.tstop
     dt = cell.dt
-#-52~1 amp
-#R
-    amp1 = 0.5519*1e5  #spike happened with 2 electrodes  (R = 10)(nA / 0.001 uA)
-    amp2 = 0.276*1e5   #spike happened with 4 electrodes  (R = 10)(nA / 0.001 uA)
-    amp3 = 0.1815*1e5   #spike happened with 6 electrodes (R = 10)(nA / 0.001 uA)
-    amp4 = 0.6012*1e6   #spike happened with 6 electrodes (R = 50)(nA / 0.001 uA)
-    amp5 = 0.2207*1e6   #spike happened with 6 electrodes (R = 50, D = 23)(nA / 0.001 uA)
-    amp6 = 0.1547*1e7   #spike happened with 4 electrodes (R = 50, D = 23)(nA / 0.001 uA)
+    amp = 41.44*1e4
+    #spike happened with 6 electrodes (R = 100, D = 23)(nA / 0.001 uA): 38.55*1e4
+    #spike happened with 6 electrodes (R = 100, D = 20)(nA / 0.001 uA): 41.44*1e4
+    #spike happened with 4 electrodes (R = 100, D = 20)(nA / 0.001 uA): 189.03*1e4
+    #spike happened with 2 electrodes (R = 100, D = 20)(nA / 0.001 uA): 378.05*1e4
     frequency = 1000
-    delta = 20 #23
+    delta = 20
     stim_elec_params = {
-        0:  {"amp": amp4, "freq": frequency + delta, "phase": np.pi }, #+x
-        1:  {"amp": amp4, "freq": frequency, "phase": np.pi },         #-x
-        2:  {"amp": amp4, "freq": frequency + delta, "phase": np.pi }, 
-        3:  {"amp": amp4, "freq": frequency, "phase": np.pi }, 
-        4:  {"amp": amp4, "freq": frequency + delta, "phase": np.pi }, 
-        5:  {"amp": amp4, "freq": frequency, "phase": np.pi }, 
+        0:  {"amp": amp, "freq": frequency + delta, "phase": np.pi }, #+x
+        1:  {"amp": amp, "freq": frequency, "phase": np.pi },         #-x
+        2:  {"amp": amp, "freq": frequency + delta, "phase": np.pi }, 
+        3:  {"amp": amp, "freq": frequency, "phase": np.pi }, 
+        4:  {"amp": amp, "freq": frequency + delta, "phase": np.pi }, 
+        5:  {"amp": amp, "freq": frequency, "phase": np.pi }, 
     }
 
     # ---- 對每個 cell 套用外加刺激（每次皆使用「新的」probe，避免快取形狀衝突）----
@@ -231,14 +214,13 @@ def main(j, k, l):
     ))
     fig.update_layout(
         scene=dict(
-            xaxis=dict(title="X", range=[50,-50]),
-            yaxis=dict(title="Y", range=[50,-50]),
-            zaxis=dict(title="Z", range=[50,-50]),
+            xaxis=dict(title="X", range=[150,-150]),
+            yaxis=dict(title="Y", range=[150,-150]),
+            zaxis=dict(title="Z", range=[150,-150]),
             aspectmode='cube'
             ),
         )
     fig.show()
-
 
 if __name__ == "__main__":
     # theta  : Y軸
